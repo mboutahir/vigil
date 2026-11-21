@@ -1,21 +1,5 @@
 package com.ft_transcendence.vigil.services;
 
-import java.io.EOFException;
-import java.net.StandardProtocolFamily;
-import java.net.UnixDomainSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 public final class TlsTestSupport {
     private TlsTestSupport() {}
 
@@ -63,68 +47,4 @@ public final class TlsTestSupport {
             kcYTWm0i5MoUTIvT4wmG+gpMEvAt6w==
             -----END CERTIFICATE-----
             """;
-
-    @FunctionalInterface
-    public interface Reply {
-        void send(SocketChannel peer, String request) throws Exception;
-    }
-
-    public static final class UnixStub implements AutoCloseable {
-        private final ServerSocketChannel server;
-        private final ExecutorService executor = Executors.newSingleThreadExecutor();
-        private final Future<?> task;
-        private final Path path;
-
-        public UnixStub(Path path, Reply reply) throws Exception {
-            this.path = path;
-            server = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
-            server.bind(UnixDomainSocketAddress.of(path));
-            task = executor.submit(() -> {
-                try (SocketChannel peer = server.accept()) {
-                    ByteBuffer one = ByteBuffer.allocate(1);
-                    StringBuilder request = new StringBuilder();
-                    while (request.length() <= 4096) {
-                        if (peer.read(one) < 0) {
-                            throw new EOFException("Request missing newline");
-                        }
-                        one.flip();
-                        byte value = one.get();
-                        one.clear();
-                        if (value == '\n') {
-                            reply.send(peer, request.toString());
-                            return null;
-                        }
-                        request.append((char) Byte.toUnsignedInt(value));
-                    }
-                    throw new AssertionError("Request exceeds limit");
-                }
-            });
-        }
-
-        public UnixStub(Path path, String response) throws Exception {
-            this(path, (peer, request) -> write(peer, response));
-        }
-
-        public static void write(SocketChannel peer, String value) throws Exception {
-            ByteBuffer bytes = StandardCharsets.UTF_8.encode(value);
-            while (bytes.hasRemaining()) {
-                peer.write(bytes);
-            }
-        }
-
-        public static void assertClientClosed(SocketChannel peer) throws Exception {
-            assertEquals(-1, peer.read(ByteBuffer.allocate(1)), "API must close the single request connection");
-        }
-
-        @Override
-        public void close() throws Exception {
-            server.close();
-            try {
-                task.get(12, TimeUnit.SECONDS);
-            } finally {
-                executor.shutdownNow();
-                Files.deleteIfExists(path);
-            }
-        }
-    }
 }
