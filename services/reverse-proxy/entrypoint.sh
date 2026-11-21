@@ -16,8 +16,10 @@ public=/public-ca/root.crt
 ) &
 
 if [ "${1:-}" = run ]; then
+    /usr/local/bin/vigil-tls-control prepare
+    /usr/local/bin/vigil-tls-control serve &
     shift
-    set -- run --config /etc/caddy/Caddyfile --adapter caddyfile "$@"
+    set -- run --config "${VIGIL_TLS_STATE_DIR:-/config/vigil-tls}/Caddyfile" --adapter caddyfile "$@"
 fi
 
 # Start Caddy, replacing this shell process.

@@ -10,7 +10,7 @@ These items were migrated from `notes.txt`. They are historical follow-ups, not 
 
 ## Account safety
 
-Normal user operations must never delete or reset the password of the API backing account (`mustbe@api.email`).
+Normal user operations must never delete or reset the password of the API backing account (`mustbe@api.email`). The CLI's explicitly confirmed, fixed-account recovery may create a missing account or restore its admin role while preserving an existing ID and password hash. See [API administration](HEYADMIN.md).
 
 ## Previously noted specification differences
 
