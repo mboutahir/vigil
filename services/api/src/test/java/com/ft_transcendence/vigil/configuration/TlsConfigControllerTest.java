@@ -7,7 +7,6 @@ import com.ft_transcendence.vigil.ratelimiter.RateLimiterRegistry;
 import com.ft_transcendence.vigil.security.JjwtAuthFilter;
 import com.ft_transcendence.vigil.security.JjwtService;
 import com.ft_transcendence.vigil.services.TlsConfigService;
-import com.ft_transcendence.vigil.services.TlsTestSupport.UnixStub;
 import com.ft_transcendence.vigil.services.UserDetailsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +51,6 @@ class TlsConfigControllerTest {
 
     @DynamicPropertySource
     static void paths(DynamicPropertyRegistry registry) {
-        registry.add("vigil.tls-control-socket", () -> temporary.resolve("control.sock").toString());
         registry.add("vigil.tls-ca-path", () -> temporary.resolve("root.crt").toString());
     }
 
@@ -78,43 +76,29 @@ class TlsConfigControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = {200, 409})
-    void adminGetsVerifiedFrontendSchemaIncludingVerifiedConflict(int httpStatus) throws Exception {
-        String response = mapper.writeValueAsString(Map.of("http_status", httpStatus, "body", Map.of(
-                "address", "https://example.test:8443", "configured", true, "status", "verified",
-                "tls_mode", "local", "otlp_endpoint", "https://example.test:8443",
-                "ca_download_url", "/api/config/tls/ca"))) + "\n";
-        try (var stub = new UnixStub(temporary.resolve("control.sock"), response)) {
-            mvc.perform(post("/api/config/tls/addresses").with(user("admin").roles("admin"))
-                            .contentType(MediaType.APPLICATION_JSON).content("{\"address\":\"https://example.test:8443\"}"))
-                    .andExpect(status().is(httpStatus))
-                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                    .andExpect(header().string("Cache-Control", "no-store"))
-                    .andExpect(jsonPath("$.address").value("https://example.test:8443"))
-                    .andExpect(jsonPath("$.configured").value(true))
-                    .andExpect(jsonPath("$.status").value("verified"))
-                    .andExpect(jsonPath("$.tls_mode").value("local"))
-                    .andExpect(jsonPath("$.otlp_endpoint").value("https://example.test:8443"))
-                    .andExpect(jsonPath("$.ca_download_url").value("/api/config/tls/ca"))
-                    .andExpect(jsonPath("$.tlsMode").doesNotExist());
-        }
+    @Test
+    void adminGetsVerifiedLocalAddressInFrontendSchema() throws Exception {
+        mvc.perform(post("/api/config/tls/addresses").with(user("admin").roles("admin"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"address\":\"https://vigil.localhost:8443\"}"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.address").value("https://vigil.localhost:8443"))
+                .andExpect(jsonPath("$.configured").value(true))
+                .andExpect(jsonPath("$.status").value("verified"))
+                .andExpect(jsonPath("$.tls_mode").value("local"))
+                .andExpect(jsonPath("$.otlp_endpoint").value("https://vigil.localhost:8443/otlp"))
+                .andExpect(jsonPath("$.ca_download_url").value("/api/config/tls/ca"))
+                .andExpect(jsonPath("$.tlsMode").doesNotExist());
     }
 
     @Test
-    void pendingHasRetryThreeAndNoTlsMode() throws Exception {
-        try (var stub = new UnixStub(temporary.resolve("control.sock"),
-                "{\"http_status\":202,\"body\":{\"address\":\"https://example.test\","
-                        + "\"configured\":false,\"status\":\"pending\",\"retry_after_seconds\":3,\"code\":\"CERT_PENDING\"}}\n")) {
-            mvc.perform(post("/api/config/tls/addresses").with(user("admin").roles("admin"))
-                            .contentType(MediaType.APPLICATION_JSON).content("{\"address\":\"https://example.test\"}"))
-                    .andExpect(status().isAccepted())
-                    .andExpect(jsonPath("$.configured").value(false))
-                    .andExpect(jsonPath("$.status").value("pending"))
-                    .andExpect(jsonPath("$.retry_after_seconds").value(3))
-                    .andExpect(jsonPath("$.code").value("CERT_PENDING"))
-                    .andExpect(jsonPath("$.tls_mode").doesNotExist());
-        }
+    void nonLocalAddressIs400WithTheSupportedNames() throws Exception {
+        mvc.perform(post("/api/config/tls/addresses").with(user("admin").roles("admin"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"address\":\"https://vigil.example.com\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.message", containsString("vigil.localhost")));
     }
 
     @ParameterizedTest
@@ -136,26 +120,11 @@ class TlsConfigControllerTest {
     }
 
     @Test
-    void helperOriginValidationIsReturnedAsSafe400() throws Exception {
-        try (var stub = new UnixStub(temporary.resolve("control.sock"),
-                "{\"http_status\":400,\"body\":{\"message\":\"private diagnostic\"}}\n")) {
-            mvc.perform(post("/api/config/tls/addresses").with(user("admin").roles("admin"))
-                            .contentType(MediaType.APPLICATION_JSON).content("{\"address\":\"http://example.test/path\"}"))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.message", containsString("HTTPS origin")))
-                    .andExpect(content().string(not(containsString("private diagnostic"))));
-        }
-    }
-
-    @Test
-    void invalidHelperReplyIsSafe503() throws Exception {
-        try (var stub = new UnixStub(temporary.resolve("control.sock"), "{\"http_status\":302,\"body\":{}}\n")) {
-            mvc.perform(post("/api/config/tls/addresses").with(user("admin").roles("admin"))
-                            .contentType(MediaType.APPLICATION_JSON).content("{\"address\":\"https://example.test\"}"))
-                    .andExpect(status().isServiceUnavailable())
-                    .andExpect(jsonPath("$.message", containsString("helper")))
-                    .andExpect(content().string(not(containsString(temporary.toString()))));
-        }
+    void nonHttpsOrPathAddressIs400() throws Exception {
+        mvc.perform(post("/api/config/tls/addresses").with(user("admin").roles("admin"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"address\":\"http://example.test/path\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("HTTPS origin")));
     }
 
     @Test
