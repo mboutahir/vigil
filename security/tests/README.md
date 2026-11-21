@@ -87,6 +87,16 @@ This is not browser automation, exhaustive Vault recovery/ACL testing, a databas
 upgrade or grant audit, external-webhook verification, or an HTTP/2/idle-timeout
 soak. Never run account-creating or rate-limit-exhausting checks against production.
 
+## TLS runtime checks
+
+The separate [TLS test instructions](../../services/reverse-proxy/README.md#tests)
+cover API/helper checks and `services/reverse-proxy/tests/test-tls-config.py`.
+The runtime suite reuses `test-fullstack.py` for isolation and cleanup, but starts
+only the 13-service non-AI dependency chain. It requires current built images;
+see the linked instructions for commands and optional public-ACME testing.
+Public issuance exposes disposable ingress, uses CA rate limits, and creates
+certificate-transparency records. It is opt-in, not part of the default checks.
+
 ## Proxy integration assumptions
 
 Only Caddy is public; API/WAF ports stay internal. Keep native API forwarded-header

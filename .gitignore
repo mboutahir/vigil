@@ -79,6 +79,7 @@ dist-ssr/
 # === Markdown ===
 *.md
 !**/README.md
+!/services/api/HEYADMIN.md
 !/services/api/DEVELOPMENT.md
 !/services/telemetry-collector/COLLECTOR.md
 
