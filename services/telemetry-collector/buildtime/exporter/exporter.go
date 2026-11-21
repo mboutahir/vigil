@@ -22,22 +22,20 @@ import (
 )
 
 // Exporter holds one Collector signal consumer, its external clients, and its delivery state.
-// deliveryMu guards pending deliveries and serializes delivery on this instance.
+// deliveryMu guards recent keys and pending deliveries on this instance.
 // The clock, ID generator, and wait function can be replaced in tests.
 type Exporter struct {
-
-	Config				*Config
-	Settings			collexporter.Settings
-	Storage				Storage
-	dedup				*deduplicator
-	now					func() time.Time
-	newNotificationID	func() string
-	deliveryMu			sync.Mutex
-	pending				[]*pendingDelivery
-	callbackClient		*http.Client
-	wait				func(context.Context, time.Duration) error
-	callbackFailures	metric.Int64Counter
-
+	Config            *Config
+	Settings          collexporter.Settings
+	Storage           Storage
+	recent            map[dedupKey]time.Time
+	now               func() time.Time
+	newNotificationID func() string
+	deliveryMu        sync.Mutex
+	pending           []pendingDelivery
+	callbackClient    *http.Client
+	wait              func(context.Context, time.Duration) error
+	callbackFailures  metric.Int64Counter
 }
 
 // Start satisfies the Collector lifecycle. The clients connect on demand during delivery.
@@ -137,13 +135,12 @@ func newExporter(config *Config, settings collexporter.Settings) (*Exporter, err
 
 	instance := &Exporter{
 
-		Config:				config,
-		Settings:			settings,
-		Storage:			newClickHouseStorage(config),
-		dedup:				newDeduplicator(config.DedupWindow),
-		now:				time.Now,
-		newNotificationID:	newNotificationID,
-
+		Config:            config,
+		Settings:          settings,
+		Storage:           newClickHouseStorage(config),
+		recent:            make(map[dedupKey]time.Time),
+		now:               time.Now,
+		newNotificationID: newNotificationID,
 	}
 	// Expose redirects as responses so the callback only posts to the configured URL.
 	instance.callbackClient = &http.Client{Timeout: 10 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error {
