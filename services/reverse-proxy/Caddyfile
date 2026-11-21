@@ -30,9 +30,7 @@
 	}
 }
 
-# self-hosted: every name is signed by caddy's local CA
-# keep this list in sync with TlsConfigService.LOCAL_HOSTS in the API
-localhost, vigil.localhost, host.docker.internal {
+localhost {
 	tls internal
 	import vigil-routes
 }
