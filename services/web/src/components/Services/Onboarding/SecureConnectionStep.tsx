@@ -84,14 +84,13 @@ export default function SecureConnectionStep({
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             onAddressChange(e.target.value)
           }
-          placeholder="vigil.localhost:8443"
+          placeholder="vigil.example.com:8443"
           className="mono min-w-0 flex-1 bg-transparent px-3 py-4 outline-none"
         />
       </div>
       <p className="mt-2 text-[13px] leading-5 text-vigil-muted">
-        VIGIL is self-hosted and signs its own certificates. From a Docker
-        container on this machine, use vigil.localhost or host.docker.internal
-        with VIGIL&apos;s HTTPS port, for example vigil.localhost:8443.
+        Enter a reachable hostname or IP and optional HTTPS port. This does not
+        configure DNS, firewall rules, or port forwarding.
       </p>
       {!isBuiltin && (
         <div className="mt-4 flex flex-col gap-2">
