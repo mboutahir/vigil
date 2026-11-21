@@ -138,7 +138,7 @@ Required roles: **Product Owner:** Ismail El Moufid. **Project Manager / Scrum M
 | LLM service | Python 3.13, FastAPI, pydantic, httpx | Native async streaming, strict validation, Python is the AI ecosystem |
 | LLM runtime | Ollama with `qwen2.5:0.5b` | Runs locally: free, no API key, and telemetry never leaves the machine |
 | Ingestion | Custom OpenTelemetry Collector (built with OCB) + our Go exporter | Standard OTLP for any language, with our own storage and notification logic |
-| Edge | Caddy | Automatic HTTPS (local CA or Let's Encrypt), serves the frontend |
+| Edge | Caddy | Automatic HTTPS with its own local certificate authority, serves the frontend |
 | WAF | nginx + ModSecurity v3 + OWASP CRS 4 | Blocks attacks before they reach the API |
 | Secrets | HashiCorp Vault with AppRole agents | Secrets encrypted at rest, each service only reads its own |
 | Deployment | Docker Compose, distroless and alpine images, non-root users | One command; small attack surface |
@@ -203,7 +203,7 @@ Two restricted ClickHouse accounts enforce least privilege: `vigil_writer` (the 
 | AI alert analysis | Automatic, streamed plain-English explanation of each alert from the surrounding telemetry | Mohammed (LLM service), El Amrani (API side), Reda (UI) |
 | Ask AI | Follow-up questions about an alert, streamed, with conversation history and per-user rate limiting | Mohammed, El Amrani, Reda (UI) |
 | Webhooks | Forward alerts to external URLs | El Amrani, Reda |
-| HTTPS and TLS management | Caddy with a local CA or Let's Encrypt, configurable public address | Ismail |
+| HTTPS and TLS management | Caddy with a local certificate authority for `localhost`, `vigil.localhost` and `host.docker.internal` | Ismail |
 | WAF | ModSecurity + OWASP CRS at paranoia level 2 in front of the API | Jihad |
 | Secret management | Vault initialization, AppRole agents rendering each service's secrets | Jihad |
 | PWA | Web manifest, service worker, offline page, installable | Reda |
@@ -277,7 +277,6 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
   - `api`: business logic, auth, alerts (Java).
   - `llm`: AI only, stateless (Python).
   - `telemetry-collector`: ingestion only (Go).
-  - `tls-control`: certificate configuration only (Go).
   - They communicate over REST and SSE with documented JSON contracts. The collector notifies the API through an internal REST callback that isn't reachable from outside.
 
 ### 11. Advanced analytics dashboard (Major)
@@ -333,10 +332,10 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
 - **As Product Owner:** defined the product vision, prioritized features, and validated finished work.
 - **What he built:**
   - The Docker Compose deployment.
-  - Caddy and the `tls-control` helper (local CA or Let's Encrypt, configurable public address).
+  - Caddy, with HTTPS from its own local certificate authority.
   - The custom telemetry collector and its exporter.
   - The mock telemetry sender.
-  - The full-stack and TLS test suites.
+  - The full-stack test suite.
 - **Challenges:** TODO (for example reliable delivery and deduplication between the collector, ClickHouse and the API).
 
 ### Jihad Hamdaoui (jhamdaou): Developer
