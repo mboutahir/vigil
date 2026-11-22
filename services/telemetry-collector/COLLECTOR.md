@@ -6,41 +6,9 @@ Vigil’s OpenTelemetry Collector receives OTLP logs, metrics, and traces over H
 
 A goroutine is a task scheduled by the Go runtime. The runtime can run many goroutines across OS threads. In Vigil's configuration, the upstream batch processor starts one batching goroutine per signal pipeline. Receiver calls submit telemetry through a buffered channel. The batching goroutine waits for an item, a flush timer, or shutdown, then calls the signal's exporter synchronously when a batch is ready. The log, metric, and trace pipelines use distinct exporter instances and can make progress independently. See the [pinned batch processor source](https://github.com/open-telemetry/opentelemetry-collector/blob/cd3455cf3a7f672208140b1ebb1581c542b2b0ed/processor/batchprocessor/batch_processor.go) and the [Vigil factory](buildtime/exporter/factory.go).
 
-### What each mutex protects
+Each exporter has one delivery mutex. Row conversion happens before the lock. `TryLock` returns a retryable busy error if another call is delivering; otherwise `defer` releases the lock when delivery returns. The lock covers the recent-key map, pending batches, and the ClickHouse and callback requests. No separate key reservations are needed.
 
-| Mutex | What it protects | How long it is held |
-| --- | --- | --- |
-| `Exporter.deliveryMu` | One delivery at a time on this exporter instance, including its `pending` slice. | From a successful `TryLock` until `deliver` returns. It stays held through ClickHouse I/O, callback attempts, and callback backoff. Row conversion happens before acquiring it. |
-| `deduplicator.mu` | The shared key map and each reservation's `done` flag. | Briefly during reservation, commit, release, and expiry refresh. Database and callback requests run outside this mutex. |
-
-`TryLock()` acquires the mutex and returns `true` if it is available. A concurrent call that gets `false` returns `errDedupInFlight` immediately. A successful call registers `defer exporter.deliveryMu.Unlock()` to release the mutex on any subsequent return. When delivery needs both locks, it already holds `deliveryMu` before acquiring `deduplicator.mu`. See [the delivery function](buildtime/exporter/delivery.go) and [the deduplicator](buildtime/exporter/dedup.go).
-
-```mermaid
-sequenceDiagram
-    participant A as Call A
-    participant E as Same exporter instance
-    participant B as Call B
-    A->>E: TryLock succeeds
-    Note over A,E: A owns delivery during insert, visibility check, and callback
-    B->>E: TryLock while A owns delivery
-    E-->>B: Return errDedupInFlight
-    Note over A,E: On return, deferred reservation cleanup runs first
-    A->>E: Deferred Unlock releases delivery
-```
-
-This shows two calls to the same instance. The configured batch worker calls its own exporter serially. The busy error indicates that a later call could try again. The configured upstream batch processor logs `Sender failed` on an export error and does not resubmit the failed batch. Vigil's visibility recovery runs when a subsequent call contains an overlapping row. See the [batch processor's send path](https://github.com/open-telemetry/opentelemetry-collector/blob/cd3455cf3a7f672208140b1ebb1581c542b2b0ed/processor/batchprocessor/batch_processor.go#L257-L276).
-
-### Reservation ownership and deferred cleanup
-
-The word *pending* refers to two stages in the code. A pending **dedup entry** belongs to a reservation that is still waiting for its insert result. A **pending delivery** already has an accepted insert and is waiting for visibility confirmation. Keeping the latter in `Exporter.pending` lets a later call resume at the visibility check with the original ID and row count.
-
-`defer reservation.release()` registers cleanup once a claim succeeds. On an insert error, `release` deletes its pending keys so a later call can claim them. On a successful insert, `commit` changes the map entries to expiring keys and sets `done`, so the deferred release leaves them in place. Deferred calls run in reverse registration order, so reservation cleanup completes before `deliveryMu` is unlocked.
-
-### How the concurrency test proves ownership
-
-[`TestDedupConcurrentReservations`](buildtime/exporter/dedup_test.go) starts 32 goroutines with `waitGroup.Go(func() { ... })`. The function is a closure over the shared deduplicator, key, and result channel. Successful claimants use `winners <- reservation` to send their claim to a channel buffered for all 32 possible results. This makes it possible to wait for all goroutines before reading from the channel, even if a bug produces too many winners.
-
-`waitGroup.Wait()` waits for the senders to finish. Then `close(winners)` marks the channel as finished, and ranging over it drains the buffered claims. The test keeps all successful reservations alive until the senders have finished, so the same key cannot legitimately be released and claimed again during the test. It expects exactly one winner.
+The configured batch processor logs `Sender failed` on an export error and does not resubmit that batch. Vigil recovers a failed visibility check when a later call contains an overlapping row. See the [batch processor's send path](https://github.com/open-telemetry/opentelemetry-collector/blob/cd3455cf3a7f672208140b1ebb1581c542b2b0ed/processor/batchprocessor/batch_processor.go#L257-L276).
 
 ## Go syntax used in the exporter
 
@@ -60,19 +28,14 @@ The exporter can stamp a row through the returned attributes even when the row w
 
 [`waitForCallback`](buildtime/exporter/callback.go) uses `select` to pause the current goroutine until a channel is ready. `<-ctx.Done()` receives when the context's cancellation channel closes. `<-timer.C` receives when the timer fires. `defer timer.Stop()` cleans up the timer if the wait ends through cancellation. The sleep and the HTTP attempts run inside the delivery call and keep its delivery lock held.
 
-`context.WithTimeout(ctx, 10*time.Second)` returns both a child context and its cancel function. The request uses the child, so a parent cancellation or the attempt's own timeout can stop it. Calling `cancel()` explicitly releases the attempt's resources before backoff or the next request. In the configured pipeline, the batching worker derives its export context from a background context, so ending the original OTLP HTTP request does not itself cancel a batch already handed off to that worker. See the [batch processor's context and worker setup](https://github.com/open-telemetry/opentelemetry-collector/blob/cd3455cf3a7f672208140b1ebb1581c542b2b0ed/processor/batchprocessor/batch_processor.go#L146-L181).
-
-`1 << attempt` shifts the binary value `1` left by the attempt number, giving `1` and `2` for the two retries. Multiplying by `time.Second` gives the base delay. Go represents `time.Duration` in nanoseconds, so the code converts the random nanosecond count back to a duration before adding the jitter.
+The callback client sets a ten-second timeout for each HTTP request. The delivery context can cancel the request or the wait between attempts. Retries wait one or two seconds plus up to 250 milliseconds of jitter. The batch worker derives its export context from a background context, so ending the original OTLP request does not itself cancel a batch already handed to the worker.
 
 ### Interfaces, pointers, and slices
 
 | Expression | What it means here |
 | --- | --- |
-| `var _ io.Writer = (*byteCounter)(nil)` | The blank identifier makes this a compile-time check that `*byteCounter` has the `Write` method required by `io.Writer`. The encoder gets a real pointer via `&size`. The pointer receiver and `*counter += ...` update that same counter across writes. |
 | `config.(*Config)` or `http.DefaultTransport.(*http.Transport)` | These type assertions extract the concrete pointer stored inside an interface. A single-result assertion panics on a type mismatch. The factory supplies Vigil's `*Config`, and storage expects the standard HTTP transport so it can call `Clone`. |
 | `text, ok := value.(string)` | This two-result assertion reports whether the value is a string. When it is another type, attribute conversion can use its JSON representation. |
-| `append([]dedupKey(nil), reservation.keys...)` | Convert `nil` to an empty slice of keys and expand `reservation.keys` into individual arguments with `...`. The pending batch gets its own copy of the key list. |
-| `append(exporter.pending[:i], exporter.pending[i+1:]...)` | Join the elements before and after index `i` and keep the returned slice. The next entry shifts into index `i`, which is why the removal path rechecks the same index. |
 | `struct { Signal string; Row LogRow }{"logs", row}` | Declare and immediately initialize an anonymous struct. The dedup helper hashes its JSON, so the signal name and selected row fields form one input. |
 | `id[6] = (id[6] & 0x0f) \| 0x40` | The AND mask keeps the lower four bits. The OR sets the upper four to binary `0100`, marking UUID version 4. The mask on `id[8]` sets the UUID variant bits to `10`. |
 | `fmt.Errorf("insert %s: %w", signal, err)` | `%w` wraps the original error while adding context. Callers and tests can still inspect the cause with `errors.Is`. |
@@ -117,7 +80,7 @@ The `logs`, `metrics`, and `traces` pipelines all run `otlp → memory_limiter �
 | Receiver ingestion key | The bundled runtime config uses `VIGIL_INGESTION_KEY` from the environment. The Vault-rendered config reads `/run/secrets/VIGIL_INGESTION_KEY`. |
 | Memory limits | `COLLECTOR_MEMORY_LIMIT_MIB` and `COLLECTOR_MEMORY_SPIKE_LIMIT_MIB`. Main Compose fallbacks are 384 MiB and 96 MiB. |
 
-[`Config.Validate`](buildtime/exporter/config.go) checks settings without contacting either service. [`newExporter`](buildtime/exporter/exporter.go) runs validation, initializes the ClickHouse client, an HTTP callback client, the deduplicator, and the production clock, UUID generator, and retry wait function. With a Collector meter provider, it creates the `vigil.exporter.callback.failures` counter under the `vigilclickhouse` meter. The lifecycle `Start` method returns immediately and connections open on demand. `Shutdown` closes idle connections. `Capabilities` declares that the exporter leaves the original telemetry intact.
+[`Config.Validate`](buildtime/exporter/config.go) checks settings without contacting either service. [`newExporter`](buildtime/exporter/exporter.go) runs validation, initializes the ClickHouse client, an HTTP callback client, the recent-key map, and the production clock, UUID generator, and retry wait function. With a Collector meter provider, it creates the `vigil.exporter.callback.failures` counter under the `vigilclickhouse` meter. The lifecycle `Start` method returns immediately and connections open on demand. `Shutdown` closes idle connections. `Capabilities` declares that the exporter leaves the original telemetry intact.
 
 ## OTLP to ClickHouse rows
 
@@ -183,9 +146,9 @@ Both timestamps must be present and end must be at or after start. The converter
 1. **Acquire delivery ownership.** Empty input returns immediately. For a nonempty batch, `TryLock` either acquires the delivery lock or returns the busy error described above.
 2. **Prepare and size the incoming batch.** Generate a random UUID v4 and compute each row's dedup key before stamping `attributes["vigil.notification_id"]`. The exporter replaces any value at that key in the copied map. It then counts the bytes produced by Go's JSON encoder, including one newline per row, without keeping a second copy of the body. The limit applies to all incoming rows before deduplication. Exactly the configured size is allowed. Serialization errors and oversized input produce permanent errors before any storage activity.
 3. **Finish any overlapping pending batch.** Each pending item represents a successful insert that still needs visibility confirmation. An incoming key matching any of its keys triggers a check with the original ID and expected row count. If the check fails, return that error and leave the pending item available for a later matching call. If it succeeds, use the original service metadata for the callback and remove the pending item. Exclude all recovered keys from the current insert, even when their original dedup window has elapsed.
-4. **Reserve new row keys.** [The deduplicator](buildtime/exporter/dedup.go) locks its map and removes committed entries whose expiry is at or before now. A matching in-flight reservation returns an error before claiming any new keys. Committed duplicates are skipped. Within one incoming batch, the first occurrence of a new key is retained and further copies are skipped. An all-duplicate batch returns without inserting.
-5. **Insert the retained rows.** Build the per-service maximum event timestamps from the retained rows alone. Save the generated ID, signal, sorted service metadata, accepted keys, and inserted row count as the pending batch record. If the insert reports an error, release its reservations so a later attempt can claim the keys again. If the insert succeeds, commit the reserved keys with an expiry and save the pending record before checking visibility.
-6. **Verify visibility and notify.** Query the exact row count by the stamped ID. A visibility error keeps the pending batch. A successful check sets `stored_at` from the exporter clock, refreshes the keys' dedup expiry to that time plus the configured window, and attempts the callback. The pending batch is removed after callback processing. Callback failure is reported separately and delivery returns success for the stored rows.
+4. **Select new rows.** Remove expired keys from the recent-key map, then skip recently visible or just-recovered rows. Keep only the first occurrence of a new key within the batch. If no rows remain, return without inserting.
+5. **Insert the selected rows.** Build the per-service maximum timestamps from the selected rows only. If the insert fails, return the error without changing the selected keys' dedup state.
+6. **Verify visibility and notify.** Query the exact row count by the stamped ID. If confirmation fails after an accepted insert, keep its ID, keys, row count, and service metadata for recovery. Once visible, set `stored_at`, remember the keys for the configured dedup window, and attempt the callback. Report callback failure separately without retrying storage.
 
 | Signal | Identity hashed for deduplication |
 | --- | --- |
@@ -193,7 +156,7 @@ Both timestamps must be present and end must be at or after start. The converter
 | Metrics | Signal marker, series ID, normalized point timestamp, nullable start timestamp, and point payload hash. A value change in the same series at the same time can produce a distinct row. |
 | Traces | Signal marker, trace ID, and span ID. A retry with changes to other fields still has the same span identity. |
 
-Dedup entries and pending batches live in memory on each exporter instance. Expired dedup entries are cleaned up when `reserve` runs. Pending batches are recovered through overlapping input and remain in memory while waiting. Restarts and other Collector replicas have independent state. Once a dedup window expires, a subsequent duplicate can be stored with a new UUID. If ClickHouse commits a request whose success response the exporter never receives, the insert error releases the keys and a later attempt can write duplicate data. The ClickHouse tables use MergeTree and the dedup window provides best-effort process-local suppression.
+Dedup entries and pending batches live in memory on each exporter instance. Expired dedup entries are cleaned up when selecting new rows. Pending batches are recovered through overlapping input and remain in memory while waiting. Restarts and other Collector replicas have independent state. Once a dedup window expires, a subsequent duplicate can be stored with a new UUID. If ClickHouse commits a request whose success response the exporter never receives, the exporter does not remember those keys and a later attempt can write duplicate data. The ClickHouse tables use MergeTree and the dedup window provides best-effort process-local suppression.
 
 For example, a batch stores two logs and its visibility query times out. A later batch contains one of those logs and a new log. The exporter checks the original two rows by their original ID, sends the original callback if they are visible, then inserts only the new log with the new ID.
 
@@ -241,12 +204,12 @@ The [API callback handler](../api/src/main/java/com/ft_transcendence/vigil/domai
 | [`factory.go`](buildtime/exporter/factory.go) and [`config.go`](buildtime/exporter/config.go) | Register the component, supply defaults, map configuration keys, and validate settings. |
 | [`exporter.go`](buildtime/exporter/exporter.go) | Implements the signal consumers and lifecycle, wires dependencies, and generates notification UUIDs. |
 | [`rows.go`](buildtime/exporter/rows.go) | Defines ClickHouse JSON rows and converts OTLP data, including metric identity and attribute formatting. |
-| [`delivery.go`](buildtime/exporter/delivery.go) and [`dedup.go`](buildtime/exporter/dedup.go) | Measure batches, track row keys and reservations, coordinate inserts, and recover visibility failures. |
+| [`delivery.go`](buildtime/exporter/delivery.go) and [`dedup.go`](buildtime/exporter/dedup.go) | Measure batches, track recent row keys, coordinate inserts, and recover visibility failures. |
 | [`storage.go`](buildtime/exporter/storage.go) and [`callback.go`](buildtime/exporter/callback.go) | Implement the ClickHouse and backend HTTP calls. |
 | [`config_test.go`](buildtime/exporter/config_test.go) | Tests required configuration fields, URL rules, and dedup defaults and overrides. |
 | [`exporter_test.go`](buildtime/exporter/exporter_test.go) | Tests production time and UUID sources and their replaceable test hooks. |
 | [`rows_test.go`](buildtime/exporter/rows_test.go) | Tests severity, attribute types, resource and scope traversal, row conversion, and invalid inputs and boundaries. |
-| [`dedup_test.go`](buildtime/exporter/dedup_test.go) | Tests signal-specific keys, first-occurrence selection, concurrent reservation conflicts, release, commit, and expiry. |
+| [`dedup_test.go`](buildtime/exporter/dedup_test.go) | Tests signal-specific row identities. Delivery tests cover duplicate suppression, expiry, busy delivery, and recovery. |
 | [`storage_test.go`](buildtime/exporter/storage_test.go) | Uses an HTTP test server to check insert wire format, credentials, visibility counts, invalid inputs, and failure responses. |
 | [`delivery_test.go`](buildtime/exporter/delivery_test.go) | Uses fake storage and an HTTP callback server to check operation order, row byte limits, visibility recovery, expiration, retry timing, and failure reporting. |
 | [`integration/compose.yaml`](integration/compose.yaml) | Starts a disposable ClickHouse instance, runs the schema initializer, builds the Collector, starts the mock backend, and waits for receiver and backend reachability. |
