@@ -11,6 +11,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.function.Consumer;
 
+// each row is one span. the trace ID tells us which trace it belongs to
+// and the parent span ID tells us which span it came from
 @Repository
 public class TraceRepository {
 
@@ -36,6 +38,8 @@ public class TraceRepository {
 
         ClickHouseQuery query = filtered(service, period).orderBy(orderBy(sort)).limit(count);
 
+        // when sorting by time, the next page gets older spans
+        // when sorting by another column, offset tells us how many rows to skip
         if (sort == null || sort.equals("timestamp"))
             query.before(before);
         else
@@ -44,12 +48,14 @@ public class TraceRepository {
         return query.list(jdbcTemplate, this::mapTrace, "traces");
     }
 
+    // for CSV we get all the matching spans, newest first
     public void streamAllTraces(String service, String period, Consumer<Trace> consumer) {
         filtered(service, period)
                 .orderBy("timestamp DESC")
                 .stream(jdbcTemplate, this::mapTrace, consumer, "traces");
     }
 
+    // for alert analysis we read spans between these times, oldest first
     public List<Trace> findTrace(String service, Instant from, Instant to) {
         return filtered(service, null)
                 .between(from, to)
@@ -57,6 +63,8 @@ public class TraceRepository {
                 .list(jdbcTemplate, this::mapTrace, "traces");
     }
 
+    // when the collector tells us it saved new spans, we find them by notification ID
+    // so the live page can show them
     public List<Trace> findByNotificationId(String notificationId) {
         if (notificationId == null || notificationId.isBlank()) {
             throw new IllegalArgumentException("notificationId must not be blank");

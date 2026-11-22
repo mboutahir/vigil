@@ -1,30 +1,56 @@
 package com.ft_transcendence.vigil.repositories.clickhouse;
 
 import com.ft_transcendence.vigil.domain.dtos.telemetry.Metric;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-
 import com.ft_transcendence.vigil.domain.dtos.telemetry.MetricPoint;
 import com.ft_transcendence.vigil.domain.dtos.telemetry.MetricSeries;
 import com.ft_transcendence.vigil.exceptions.TelemetryRepositoryException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
+// we read metric points for the list and CSV, and group them by time for the chart
 @Repository
 public class MetricsRepository {
 
 	private static final String SELECT = """
 			SELECT service, timestamp, name, value, attributes
 			FROM metrics
+			""";
+
+	private static final String SERIES_SQL = """
+			WITH chart_points AS (
+				SELECT service, name, unit, value,
+					attributes['internal'] = 'true' AS is_internal,
+					toStartOfInterval(timestamp, toIntervalSecond(%1$d)) AS bucket,
+					if(metric_type = 'sum' AND is_monotonic, 'counter', 'gauge') AS kind,
+					lag(value) OVER (PARTITION BY series_id ORDER BY timestamp) AS previous_value,
+					-- if a counter goes from 100 to 130, we count 30 for this point
+					CASE
+						WHEN aggregation_temporality != 'cumulative' THEN value
+						WHEN value >= previous_value THEN value - previous_value
+					END AS counter_change
+				FROM metrics
+				%2$s
+			)
+			SELECT service, name, bucket,
+				any(unit) AS series_unit,
+				any(kind) AS series_kind,
+				any(is_internal) AS series_internal,
+				-- counters show how much changed per second, gauges show the average
+				if(series_kind = 'counter', sum(counter_change) / %1$d, avg(value)) AS bucket_value
+			FROM chart_points
+			GROUP BY service, name, bucket
+			ORDER BY name, service, bucket
 			""";
 
 	private final JdbcTemplate jdbcTemplate;
@@ -40,6 +66,7 @@ public class MetricsRepository {
 			Instant before,
 			int limit) {
 
+		// for the next page we only get points older than the before time
 		return filtered(service, period, internalOnly)
 				.before(before)
 				.orderBy("timestamp DESC")
@@ -47,6 +74,7 @@ public class MetricsRepository {
 				.list(jdbcTemplate, this::mapMetric, "metrics");
 	}
 
+	// for CSV we get all the matching points, newest first
 	public void streamAllMetrics(
 			String service,
 			String period,
@@ -58,6 +86,7 @@ public class MetricsRepository {
 				.stream(jdbcTemplate, this::mapMetric, consumer, "metrics");
 	}
 
+	// for alert analysis we read points between these times, oldest first
 	public List<Metric> findMetrics(String service, Instant from, Instant to) {
 		return filtered(service, null, null)
 				.between(from, to)
@@ -65,6 +94,8 @@ public class MetricsRepository {
 				.list(jdbcTemplate, this::mapMetric, "metrics");
 	}
 
+	// when the collector tells us it saved new points, we find them by notification ID
+	// so the live page can show them
 	public List<Metric> findByNotificationId(String notificationId) {
 		if (notificationId == null || notificationId.isBlank()) {
 			throw new IllegalArgumentException("notificationId must not be blank");
@@ -80,11 +111,16 @@ public class MetricsRepository {
 				.since(period);
 
 		if (internalOnly != null)
-			query.where(internalOnly
-					? "attributes['internal'] = 'true'"
-					: "(attributes['internal'] = 'false' OR NOT mapContains(attributes, 'internal'))");
+			query.where(internalFilter(internalOnly));
 
 		return query;
+	}
+
+	// false also takes points that have no internal key
+	private static String internalFilter(boolean internalOnly) {
+		return internalOnly
+				? "attributes['internal'] = 'true'"
+				: "(attributes['internal'] = 'false' OR NOT mapContains(attributes, 'internal'))";
 	}
 
 	private Metric mapMetric(ResultSet result, int rowNum) throws SQLException {
@@ -97,141 +133,35 @@ public class MetricsRepository {
 	}
 
 	public List<MetricSeries> findSeries(
-		String period,
-		String service,
-		Boolean internalOnly,
-		int intervalSeconds) {
+			String period, String service, Boolean internalOnly, int intervalSeconds) {
 
-		String interval = switch (period) {
-			case "1h" -> "1 HOUR";
-			case "24h" -> "24 HOUR";
-			case "7d" -> "7 DAY";
-			case "30d" -> "30 DAY";
-			default -> throw new IllegalArgumentException("Invalid period");
-		};
+		if (period == null || period.isBlank())
+			throw new IllegalArgumentException("period must be one of 1h, 24h, 7d, 30d");
 
-		StringBuilder filters = new StringBuilder(
-				"timestamp >= now() - INTERVAL " + interval
-				+ " AND metric_type != ''"
-		);
-
-		List<Object> params = new ArrayList<>();
-
-		if (service != null && !service.isBlank()) {
-			filters.append(" AND service = ?");
-			params.add(service);
-		}
-
-		if (internalOnly != null) {
-			filters.append(internalOnly
-					? " AND attributes['internal'] = 'true'"
-					: " AND (attributes['internal'] = 'false' "
-					+ "OR NOT mapContains(attributes, 'internal'))");
-		}
-
-		String sql = """
-				SELECT service, name,
-					any(unit) AS series_unit,
-					any(point_kind) AS series_kind,
-					any(is_internal) AS series_internal,
-					bucket,
-					multiIf(
-						any(point_kind) = 'histogram',
-						sum(inc_hsum) / nullIf(sum(inc_hcount), 0),
-						any(point_kind) = 'counter',
-						sum(inc_value) / %d,
-						avg(value)
-					) AS bucket_value
-				FROM (
-					SELECT service, name, unit, value,
-						attributes['internal'] = 'true' AS is_internal,
-						toStartOfInterval(
-							timestamp, toIntervalSecond(%d)
-						) AS bucket,
-						multiIf(
-							metric_type IN (
-								'histogram', 'exponential_histogram'
-							), 'histogram',
-							metric_type = 'sum' AND is_monotonic,
-							'counter',
-							'gauge'
-						) AS point_kind,
-						if(
-							aggregation_temporality = 'cumulative',
-							if(rn = 1 OR value < prev_value,
-								NULL, value - prev_value),
-							value
-						) AS inc_value,
-						if(
-							aggregation_temporality = 'cumulative',
-							if(rn = 1 OR histogram_sum < prev_hsum,
-								NULL, histogram_sum - prev_hsum),
-							histogram_sum
-						) AS inc_hsum,
-						if(
-							aggregation_temporality = 'cumulative',
-							if(rn = 1 OR histogram_count < prev_hcount,
-								NULL,
-								toFloat64(histogram_count)
-								- toFloat64(prev_hcount)),
-							toFloat64(histogram_count)
-						) AS inc_hcount
-					FROM (
-						SELECT *,
-							row_number() OVER (
-								PARTITION BY series_id
-								ORDER BY timestamp
-							) AS rn,
-							lagInFrame(value) OVER w AS prev_value,
-							lagInFrame(histogram_sum) OVER w AS prev_hsum,
-							lagInFrame(histogram_count) OVER w AS prev_hcount
-						FROM metrics
-						WHERE %s
-						WINDOW w AS (
-							PARTITION BY series_id
-							ORDER BY timestamp
-							ROWS BETWEEN 1 PRECEDING AND CURRENT ROW
-						)
-					)
-				)
-				GROUP BY service, name, bucket
-				ORDER BY name, service, bucket
-				""".formatted(intervalSeconds, intervalSeconds, filters);
-
+		ClickHouseQuery filters = filtered(service, period, internalOnly)
+				.where("metric_type IN ('gauge', 'sum')");
+		String sql = SERIES_SQL.formatted(intervalSeconds, filters.whereClause());
 		record SeriesKey(String name, String service) {}
-
-		Map<SeriesKey, List<MetricPoint>> points = new LinkedHashMap<>();
 		Map<SeriesKey, MetricSeries> series = new LinkedHashMap<>();
 
 		try {
 			jdbcTemplate.query(sql, rs -> {
-				String name = rs.getString("name");
-				String serviceName = rs.getString("service");
-				SeriesKey key = new SeriesKey(name, serviceName);
-
-				points.computeIfAbsent(key, k -> new ArrayList<>());
-
-				if (!series.containsKey(key)) {
-					series.put(key, new MetricSeries(
-							name,
-							serviceName,
-							rs.getString("series_unit"),
-							rs.getString("series_kind"),
-							rs.getBoolean("series_internal"),
-							points.get(key)
-					));
+				var key = new SeriesKey(rs.getString("name"), rs.getString("service"));
+				MetricSeries chart = series.get(key);
+				if (chart == null) {
+					chart = new MetricSeries(key.name(), key.service(),
+							rs.getString("series_unit"), rs.getString("series_kind"),
+							rs.getBoolean("series_internal"), new ArrayList<>());
+					series.put(key, chart);
 				}
 
-				points.get(key).add(new MetricPoint(
+				// each SQL row gives us a point for this chart
+				chart.points().add(new MetricPoint(
 						rs.getTimestamp("bucket").toInstant(),
-						rs.getObject("bucket_value", Double.class)
-				));
-			}, params.toArray());
-
+						rs.getObject("bucket_value", Double.class)));
+			}, filters.params());
 		} catch (DataAccessException e) {
-			throw new TelemetryRepositoryException(
-					"Failed to query metric series from ClickHouse", e
-			);
+			throw new TelemetryRepositoryException("Failed to query metric series from ClickHouse", e);
 		}
 
 		return new ArrayList<>(series.values());
