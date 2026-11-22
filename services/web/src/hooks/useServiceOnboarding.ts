@@ -1,271 +1,166 @@
-import { useMemo, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import {
-  existingInstrumentationGuide,
-  instrumentationGuides,
-  telemetryProfiles,
-  type InstrumentationSetup,
-  type OnboardingStep,
-  type ServiceLanguage,
-  type TlsMode,
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type {
+  ExporterFormat,
+  OnboardingStep,
+  ServiceLanguage,
 } from '../data/serviceOnboarding';
+import { getApiKeys } from '../api/apiKeyApi';
 import type { ApiFetch } from '../api/api';
 import {
+  type ConfigureTlsAddressResponse,
   configureTlsAddress,
-  getConfigKeys,
   getTlsCa,
 } from '../api/serviceOnboardingApi';
 
-const DEFAULT_CA_PATH = '/etc/vigil/vigil-ca.crt';
-const DEFAULT_JAVA_AGENT_PATH = '/app/opentelemetry-javaagent.jar';
-const DEFAULT_ADDRESS = 'https://localhost';
+function suggestedAddress(format: ExporterFormat) {
+  const url = new URL(
+    window.location.protocol === 'https:'
+      ? window.location.origin
+      : 'https://localhost:8443',
+  );
+  if (format === 'compose' && url.hostname === 'localhost')
+    url.hostname = 'vigil.localhost';
+  return url.origin;
+}
 
 export default function useServiceOnboarding(apiFetch: ApiFetch) {
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<OnboardingStep>(1);
-  const [setup, setSetup] = useState<InstrumentationSetup>('recommended');
-  const [language, setLanguage] = useState<ServiceLanguage>('');
   const [serviceName, setServiceName] = useState('');
-  const [address, setAddress] = useState(DEFAULT_ADDRESS);
-  const [verifiedAddress, setVerifiedAddress] = useState<string | null>(null);
-  const [tlsMode, setTlsMode] = useState<TlsMode>('unknown');
-  const [caPath, setCaPath] = useState(DEFAULT_CA_PATH);
-  const [javaAgentPath, setJavaAgentPath] = useState(DEFAULT_JAVA_AGENT_PATH);
+  const [address, setAddress] = useState(() => suggestedAddress('compose'));
+  const [format, updateFormat] = useState<ExporterFormat>('compose');
+  const [existing, setExisting] = useState(false);
+  const [language, setLanguage] = useState<ServiceLanguage | ''>('');
+  const [privateCaMount, setPrivateCaMount] = useState(false);
+  const [caPath, setCaPath] = useState('/etc/vigil/vigil-ca.crt');
+  const [agentPath, setAgentPath] = useState(
+    '/app/opentelemetry-javaagent.jar',
+  );
 
-  const configKeysQuery = useQuery({
-    queryKey: ['config-keys'],
-    queryFn: () => getConfigKeys(apiFetch),
-  });
-
-  const ingestionKey = configKeysQuery.data?.ingestion_key ?? '';
-
-  const configureTlsMutation = useMutation({
-    mutationFn: (address: string) => configureTlsAddress(apiFetch, address),
-
-    onSuccess: (result) => {
-      if (result.status !== 'verified' || !result.tls_mode) {
-        setVerifiedAddress(null);
-        setTlsMode('unknown');
-        return;
-      }
-      setAddress(result.address);
-      setVerifiedAddress(result.address);
-      setTlsMode(result.tls_mode);
+  const [connection, setConnection] =
+    useState<ConfigureTlsAddressResponse | null>(null);
+  const tls = useMutation({
+    mutationFn: async (value: string) => {
+      const key = ['tls-address', value];
+      const cached = queryClient.getQueryData<ConfigureTlsAddressResponse>(key);
+      if (cached) return cached;
+      const result = await configureTlsAddress(apiFetch, value);
+      if (result.status === 'verified') queryClient.setQueryData(key, result);
+      return result;
     },
   });
 
-  const downloadCaMutation = useMutation({
-    mutationFn: () => getTlsCa(apiFetch),
-    onSuccess: (blob) => {
+  function verify(value: string, onVerified: () => void) {
+    tls.mutate(value, {
+      onSuccess(result) {
+        if (result.status !== 'verified') return;
+        setConnection(result);
+        setAddress(result.address);
+        onVerified();
+      },
+    });
+  }
+  const keys = useQuery({
+    queryKey: ['apiKeys'],
+    staleTime: 60_000,
+    queryFn: () => getApiKeys(apiFetch),
+    enabled: step === 3,
+  });
+  const download = useMutation({
+    mutationFn: async () => {
+      const key = ['tls-ca'];
+      const cached = queryClient.getQueryData<Blob>(key);
+      if (cached) return cached;
+      const certificate = await getTlsCa(apiFetch);
+      queryClient.setQueryData(key, certificate);
+      return certificate;
+    },
+    onSuccess(blob) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-
       link.href = url;
       link.download = 'vigil-ca.crt';
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 0);
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
     },
   });
 
-  const needsNewInstrumentation = setup === 'recommended';
-  const isLocalTls = verifiedAddress === address && tlsMode === 'local';
-
-  const activeSteps = useMemo<OnboardingStep[]>(() => {
-    const base: OnboardingStep[] = needsNewInstrumentation
-      ? [1, 2, 3, 4, 5, 6, 7]
-      : [1, 4, 5, 6, 7];
-    if (isLocalTls) {
-      base.push(8, 9);
-    }
-    base.push(10, 11);
-    return base;
-  }, [needsNewInstrumentation, isLocalTls]);
-
-  const currentIndex = activeSteps.indexOf(step);
-  const isFirstStep = currentIndex === 0;
-  const isLastStep = currentIndex === activeSteps.length - 1;
-
-  const currentGuide = useMemo(() => {
-    if (!needsNewInstrumentation) {
-      return existingInstrumentationGuide;
-    }
-
-    if (!language) {
-      return null;
-    }
-    return instrumentationGuides[language];
-  }, [language, needsNewInstrumentation]);
-
-  const profile = useMemo(() => {
-    if (!language) {
-      return telemetryProfiles.other;
-    }
-    return telemetryProfiles[language];
-  }, [language]);
-
-  function normalizeAddress(value: string) {
-    const clean = value
-      .trim()
-      .replace(/^https:\/\//i, '')
-      .replace(/\/+$/, '');
-    return clean ? `https://${clean}` : '';
-  }
-
-  function setCustomAddress(value: string) {
-    const nextAddress = normalizeAddress(value);
-
-    setAddress(nextAddress);
-    if (nextAddress !== verifiedAddress) {
-      setVerifiedAddress(null);
-      setTlsMode('unknown');
-    }
-    configureTlsMutation.reset();
-  }
-
-  function useLocalhost() {
-    setAddress(DEFAULT_ADDRESS);
-    setVerifiedAddress(DEFAULT_ADDRESS);
-    setTlsMode('local');
-    configureTlsMutation.reset();
-  }
-
-  function verifyAddress() {
-    if (!address) {
-      return;
-    }
-    configureTlsMutation.mutate(address);
-  }
-
-  function downloadCa() {
-    downloadCaMutation.mutate();
-  }
-
-  function getIssue() {
-    if (step === 2 && needsNewInstrumentation && !language) {
-      return 'Choose your service language.';
-    }
-
-    if (
-      step === 3 &&
-      needsNewInstrumentation &&
-      language === 'java' &&
-      !javaAgentPath.trim()
-    ) {
-      return 'Enter the Java agent JAR path.';
-    }
-
-    if (step >= 4 && !serviceName.trim()) {
-      return 'Enter a service name before continuing.';
-    }
-
-    if (step === 5 && configureTlsMutation.isPending) {
-      return 'Wait for address verification to finish.';
-    }
-
-    if (step >= 5 && verifiedAddress !== address) {
-      return 'Verify the HTTPS address before continuing.';
-    }
-
-    if (step >= 7 && configKeysQuery.isPending) {
-      return 'Loading connection credentials.';
-    }
-
-    if (step >= 7 && configKeysQuery.isError) {
-      return 'Unable to load connection credentials.';
-    }
-
-    if (step >= 7 && !ingestionKey) {
-      return 'No ingestion key is available.';
-    }
-
-    if (step >= 5 && isLocalTls && !caPath.trim().startsWith('/')) {
-      return 'Enter an absolute CA certificate path.';
-    }
-    return '';
-  }
-
-  const issue = getIssue();
+  const localTls = connection?.tls_mode === 'local';
+  const endpoint = connection?.otlp_endpoint ?? `${address}/otlp`;
+  const ingestionKey = keys.data?.ingestion_key ?? '';
+  const canInstall =
+    Boolean(language) && (language !== 'java' || Boolean(agentPath.trim()));
+  const canConfigure =
+    (existing || canInstall) &&
+    (!localTls || caPath.startsWith('/')) &&
+    Boolean(ingestionKey) &&
+    !keys.isError;
 
   function next() {
-    if (issue || isLastStep) {
-      return;
+    if (step === 1 && serviceName.trim() && address.trim() && !tls.isPending) {
+      const origin = address.trim().replace(/\/+$/, '');
+      verify(origin.includes('://') ? origin : `https://${origin}`, () => {
+        setServiceName((name) => name.trim());
+        setStep(existing ? 3 : 2);
+      });
+    } else if (step === 2 && canInstall) {
+      setStep(3);
+    } else if (step === 3 && canConfigure && !tls.isPending) {
+      setStep(4);
     }
-
-    const nextStep = activeSteps[currentIndex + 1];
-
-    if (nextStep) {
-      setStep(nextStep);
-    }
-  }
-
-  function back() {
-    if (isFirstStep) {
-      return;
-    }
-
-    const previousStep = activeSteps[currentIndex - 1];
-
-    if (previousStep) {
-      setStep(previousStep);
-    }
-  }
-
-  function reset() {
-    setStep(1);
-    setSetup('recommended');
-    setLanguage('');
-    setServiceName('');
-    setAddress(DEFAULT_ADDRESS);
-    setVerifiedAddress(null);
-    setTlsMode('unknown');
-    setCaPath(DEFAULT_CA_PATH);
-    setJavaAgentPath(DEFAULT_JAVA_AGENT_PATH);
-    configureTlsMutation.reset();
-    downloadCaMutation.reset();
   }
 
   return {
     step,
-    activeSteps,
-    currentIndex,
-    isFirstStep,
-    isLastStep,
-    issue,
-    setup,
-    setSetup,
-    language,
-    setLanguage,
+    back() {
+      tls.reset();
+      if (step === 4) setStep(3);
+      else if (step === 3 && !existing) setStep(2);
+      else setStep(1);
+    },
     serviceName,
     setServiceName,
     address,
-    setCustomAddress,
-    verifiedAddress,
-    tlsMode,
-    isLocalTls,
-    useLocalhost,
-    verifyAddress,
-    isVerifyingAddress: configureTlsMutation.isPending,
-    verifyAddressError: configureTlsMutation.error,
-    tlsVerificationPending: configureTlsMutation.data?.status === 'pending',
-    tlsRetryAfterSeconds: configureTlsMutation.data?.retry_after_seconds,
+    changeAddress(value: string) {
+      tls.reset();
+      setAddress(value);
+    },
+    tls,
+    localTls,
+    endpoint,
+    keys,
+    ingestionKey,
+    download,
+    format,
+    setFormat(nextFormat: ExporterFormat) {
+      tls.reset();
+      const nextAddress = suggestedAddress(nextFormat);
+      if (address === suggestedAddress(format) && address !== nextAddress) {
+        if (step === 3) {
+          verify(nextAddress, () => updateFormat(nextFormat));
+          return;
+        }
+        setAddress(nextAddress);
+      }
+      updateFormat(nextFormat);
+    },
+    privateCaMount,
+    setPrivateCaMount,
+    existing,
+    setExisting,
+    language,
+    setLanguage,
     caPath,
     setCaPath,
-    downloadCa,
-    isDownloadingCa: downloadCaMutation.isPending,
-    downloadCaError: downloadCaMutation.error,
-    javaAgentPath,
-    setJavaAgentPath,
-    needsNewInstrumentation,
-    currentGuide,
-    profile,
-    ingestionKey,
-    configKeysLoading: configKeysQuery.isPending,
-    configKeysError: configKeysQuery.error,
+    agentPath,
+    setAgentPath,
+    canInstall,
+    canConfigure,
     next,
-    back,
-    reset,
   };
 }
+
+export type ServiceOnboarding = ReturnType<typeof useServiceOnboarding>;

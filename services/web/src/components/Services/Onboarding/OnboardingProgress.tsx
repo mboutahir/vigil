@@ -1,46 +1,44 @@
 import {
-  STEP_LABELS,
+  stepLabels,
   type OnboardingStep,
 } from '../../../data/serviceOnboarding';
 
-type Props = {
-  activeSteps: OnboardingStep[];
-  currentIndex: number;
-};
+interface Data {
+  step: OnboardingStep;
+  existing: boolean;
+}
 
-export default function OnboardingProgress({
-  activeSteps,
-  currentIndex,
-}: Props) {
+export default function OnboardingProgress({ step, existing }: Data) {
+  const labels = existing
+    ? stepLabels.filter((label) => label !== 'Install')
+    : stepLabels;
+  const current = labels.indexOf(stepLabels[step - 1]);
   return (
-    <div className="flex items-center mb-4" aria-label="Onboarding progress">
-      {activeSteps.map((step, index) => (
-        <div key={step} className="contents">
+    <ol
+      aria-label="Connection progress"
+      className="mb-4 flex items-center gap-1 sm:gap-4"
+    >
+      {labels.map((label, index) => (
+        <li
+          key={label}
+          aria-current={current === index ? 'step' : undefined}
+          className={`flex items-center gap-2 text-xs ${current >= index ? 'text-vigil-accent' : 'text-vigil-muted'}`}
+        >
           {index > 0 && (
-            <div
-              className={`h-px flex-1 mx-2 ${index <= currentIndex ? 'bg-vigil-accent' : 'bg-vigil-border'}`}
+            <span
+              aria-hidden="true"
+              className="h-px w-1 bg-vigil-border sm:w-8"
             />
           )}
-          <div className="flex items-center gap-2 min-w-0">
-            <h1
-              className={`w-7 h-7 shrink-0 border grid place-items-center text-[12px] tracking-widest ${
-                index < currentIndex
-                  ? 'bg-vigil-accent border-vigil-accent text-vigil-on-accent font-bold'
-                  : index === currentIndex
-                    ? 'border-vigil-accent text-vigil-accent'
-                    : 'border-vigil-border text-vigil-muted'
-              }`}
-            >
-              {index < currentIndex ? '✓' : String(index + 1).padStart(2, '0')}
-            </h1>
-            {index === currentIndex && (
-              <span className="hidden sm:block text-[11px] tracking-widest text-vigil-muted uppercase">
-                {STEP_LABELS[step]}
-              </span>
-            )}
-          </div>
-        </div>
+          <span
+            aria-hidden="true"
+            className="grid size-6 place-items-center border"
+          >
+            {current > index ? '✓' : index + 1}
+          </span>
+          {label}
+        </li>
       ))}
-    </div>
+    </ol>
   );
 }
