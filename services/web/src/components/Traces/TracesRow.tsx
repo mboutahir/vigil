@@ -10,6 +10,7 @@ type Data = {
   trace: Trace;
   maxDuration: number;
   isSelected: boolean;
+  traceSpans: Trace[];
   onSelect: () => void;
 };
 //we call this function in the icon element
@@ -17,6 +18,7 @@ export default function TracesRow({
   trace,
   maxDuration,
   isSelected,
+  traceSpans,
   onSelect,
 }: Data) {
   //e: React.MouseEvent click even 
@@ -93,7 +95,7 @@ export default function TracesRow({
     {isSelected && (
       <tr>
         <td colSpan={6}>
-          <TraceDetails span={trace} />
+          <TraceDetails span={trace} traceSpans={traceSpans} />
         </td>
       </tr>
     )}

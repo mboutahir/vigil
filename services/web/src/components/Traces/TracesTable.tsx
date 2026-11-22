@@ -77,6 +77,12 @@ export default function TracesTable({
               trace={trace}
               maxDuration={maxDuration}
               isSelected={trace.span_id === selectedSpanId}
+              //only the open row needs them: every loaded span of the same trace, for the waterfall
+              traceSpans={
+                trace.span_id === selectedSpanId
+                  ? traces.filter((t) => t.trace_id === trace.trace_id)
+                  : []
+              }
               onSelect={() => onSelect(trace)}
             />
           ))}
