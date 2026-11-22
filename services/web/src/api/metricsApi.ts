@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { ApiFetch } from './api';
 
 export type Period = '1h' | '24h' | '7d' | '30d';
-export type MetricKind = 'gauge' | 'counter' | 'histogram';
+export type MetricKind = 'gauge' | 'counter';
 
 export interface Metric {
   service: string;
