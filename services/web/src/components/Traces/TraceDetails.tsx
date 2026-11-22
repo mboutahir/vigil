@@ -1,8 +1,9 @@
 import type { Trace } from '../../api/tracesApi';
-import { formatTime } from '../shared/utils/format';
+import { formatDuration, formatTime } from '../shared/utils/format';
 
 interface Data {
   span: Trace;
+  traceSpans: Trace[];
 }
 
 //atributes we will show 
@@ -26,10 +27,21 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 //so we useing values is KEY_ATTRIBUTES as a key for the spans and if there is values then we want it if no t we dont
-export default function TraceDetails({ span }: Data) {
+export default function TraceDetails({ span, traceSpans }: Data) {
   const attributes = KEY_ATTRIBUTES.filter((key) => span.attributes?.[key]).map(
     (key) => [key, span.attributes[key]],
   );
+  //waterfall: timestamp is when a span started, so its bar starts at (start - trace start) and is as long as its duration
+  //sort by start time so parents come before the calls they made
+  const spans = [...traceSpans].sort(
+    (a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp),
+  );
+  const traceStart = Math.min(...spans.map((s) => Date.parse(s.timestamp)));
+  const traceEnd = Math.max(
+    ...spans.map((s) => Date.parse(s.timestamp) + s.duration_ms),
+  );
+  //max 1 so we never divide by 0 when everything took 0ms
+  const total = Math.max(1, traceEnd - traceStart);
 
   return (
     <div className="bg-vigil-bg px-3 py-4.5 space-y-4 mono">
@@ -52,6 +64,39 @@ export default function TraceDetails({ span }: Data) {
           <div className="flex flex-wrap gap-x-25 gap-y-2">
             {attributes.map(([key, value]) => (
               <Field key={key} label={key} value={value} />
+            ))}
+          </div>
+        </div>
+      )}
+      {/* one bar per span of this trace, only the spans already loaded in the table */}
+      {spans.length > 1 && (
+        <div>
+          <div className="uppercase mb-2 text-[12px] text-vigil-muted-extra tracking-wider">
+            {`Trace (${spans.length} spans loaded)`}
+          </div>
+          <div className="space-y-1.5">
+            {spans.map((s) => (
+              <div key={s.span_id} className="flex items-center gap-3 text-[12px]">
+                <span
+                  title={`${s.service} · ${s.name}`}
+                  className={`w-48 shrink-0 truncate ${s.span_id === span.span_id ? 'text-vigil-accent' : 'text-vigil-muted'}`}
+                >
+                  {s.service} · {s.name}
+                </span>
+                {/* the track is the whole trace, the bar is where this span ran inside it */}
+                <div className="relative flex-1 h-3 bg-vigil-panel">
+                  <div
+                    className={`absolute inset-y-0 ${s.status === 'error' ? 'bg-vigil-critical' : s.span_id === span.span_id ? 'bg-vigil-accent' : 'bg-vigil-muted'}`}
+                    style={{
+                      left: `${((Date.parse(s.timestamp) - traceStart) / total) * 100}%`,
+                      width: `${Math.max(1, (s.duration_ms / total) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <span className="w-16 shrink-0 text-right text-vigil-muted">
+                  {formatDuration(s.duration_ms)}
+                </span>
+              </div>
             ))}
           </div>
         </div>
