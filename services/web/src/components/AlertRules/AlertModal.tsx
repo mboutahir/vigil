@@ -31,8 +31,8 @@ export default function AlertModal(props: Data) {
   const isEdit = mode === 'edit';
   const metricsUnavailable =
     form.signalType === 'metrics' &&
-    (form.isLoadingTelemetryAttributes ||
-      form.isTelemetryAttributesError ||
+    (form.isLoadingMetricNames ||
+      form.isMetricNamesError ||
       form.metricOptions.length === 0);
 
   return (
@@ -77,7 +77,7 @@ export default function AlertModal(props: Data) {
             value={form.metricName}
             disabled={
               form.signalType === 'metrics' &&
-              (form.isLoadingTelemetryAttributes ||
+              (form.isLoadingMetricNames ||
                 form.metricOptions.length === 0)
             }
           />
@@ -87,24 +87,24 @@ export default function AlertModal(props: Data) {
             </p>
           )}
           {form.signalType === 'metrics' &&
-            form.isLoadingTelemetryAttributes && (
+            form.isLoadingMetricNames && (
               <p className="mb-3.5 text-[12px] text-vigil-muted-extra">
                 Loading available metrics...
               </p>
             )}
-          {form.signalType === 'metrics' && form.isTelemetryAttributesError && (
+          {form.signalType === 'metrics' && form.isMetricNamesError && (
             <p className="mb-3.5 text-[12px] text-vigil-state-danger-text">
-              {form.telemetryAttributesError instanceof Error
-                ? form.telemetryAttributesError.message
-                : 'Unable to load telemetry attributes.'}
+              {form.metricNamesError instanceof Error
+                ? form.metricNamesError.message
+                : 'Unable to load metric names.'}
             </p>
           )}
           {form.signalType === 'metrics' &&
-            !form.isLoadingTelemetryAttributes &&
-            !form.isTelemetryAttributesError &&
+            !form.isLoadingMetricNames &&
+            !form.isMetricNamesError &&
             form.metricOptions.length === 0 && (
               <p className="mb-3.5 text-[12px] text-vigil-muted-extra">
-                No telemetry attributes found in the last 7 days.
+                No metrics received in the last 7 days.
               </p>
             )}
           {form.showAggregation && (
