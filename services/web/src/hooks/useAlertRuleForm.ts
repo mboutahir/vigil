@@ -8,7 +8,7 @@ import {
   type AlertRules,
   type UpdateAlertRules,
 } from '../api/alertRulesApi';
-import useTelemetryAttributes from './useTelemetryAttributes';
+import useMetricNames from './useMetricNames';
 
 type AlertRuleFormOptions =
   | {
@@ -79,16 +79,13 @@ export default function useAlertRuleForm({
   const [enabled, setEnabled] = useState(isEdit ? rule.enabled : true);
   const [formError, setFormError] = useState('');
 
+  //the rule is evaluated on the metric name, so we offer the names the services really send
   const {
-    data: telemetryAttributes = [],
-    isLoading: isLoadingTelemetryAttributes,
-    isError: isTelemetryAttributesError,
-    error: telemetryAttributesError,
-  } = useTelemetryAttributes(signalType === 'metrics');
-
-  const telemetryMetricOptions = telemetryAttributes.map(
-    (attribute) => attribute.key,
-  );
+    data: telemetryMetricOptions = [],
+    isLoading: isLoadingMetricNames,
+    isError: isMetricNamesError,
+    error: metricNamesError,
+  } = useMetricNames(signalType === 'metrics');
 
   const metricOptions =
     signalType === 'metrics'
@@ -209,14 +206,14 @@ export default function useAlertRuleForm({
 
     if (
       signalType === 'metrics' &&
-      (isLoadingTelemetryAttributes || isTelemetryAttributesError)
+      (isLoadingMetricNames || isMetricNamesError)
     ) {
-      setFormError('Telemetry attributes are not available.');
+      setFormError('Metric names are not available.');
       isValid = false;
     }
 
     if (signalType === 'metrics' && metricOptions.length === 0) {
-      setFormError('No telemetry attributes found in the last 7 days.');
+      setFormError('No metrics received in the last 7 days.');
       isValid = false;
     }
     const name = metricName.trim();
@@ -323,9 +320,9 @@ export default function useAlertRuleForm({
     formError,
     isFormSubmitting,
     metricOptions,
-    isLoadingTelemetryAttributes,
-    isTelemetryAttributesError,
-    telemetryAttributesError,
+    isLoadingMetricNames,
+    isMetricNamesError,
+    metricNamesError,
     showAggregation: signalType === 'metrics',
     handleAddAlertRuleSubmit,
     handleEditAlertRuleSubmit,

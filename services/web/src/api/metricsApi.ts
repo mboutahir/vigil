@@ -101,6 +101,18 @@ async function getMetricSeries(
   }
 }
 
+//names of the metrics seen in the last 7 days, the alert rule form lists them
+async function getMetricNames(apiFetch: ApiFetch): Promise<string[]> {
+  try {
+    const res = await apiFetch<string[]>('/telemetry/metrics/names', {
+      method: 'GET',
+    });
+    return res.data;
+  } catch (error) {
+    throw toError(error, 'Unable to fetch metric names.');
+  }
+}
+
 async function exportMetricsCsv(
   apiFetch: ApiFetch,
   //describes what params is allowed to to have so only period and service
@@ -121,4 +133,4 @@ async function exportMetricsCsv(
   }
 }
 
-export { getMetrics, getMetricSeries, exportMetricsCsv };
+export { getMetrics, getMetricSeries, getMetricNames, exportMetricsCsv };
