@@ -3,7 +3,6 @@ package com.ft_transcendence.vigil.controllers;
 import com.ft_transcendence.vigil.domain.dtos.telemetry.Log;
 import com.ft_transcendence.vigil.domain.dtos.telemetry.Metric;
 import com.ft_transcendence.vigil.domain.dtos.telemetry.Trace;
-import com.ft_transcendence.vigil.domain.dtos.telemetry.AttributeResponse;
 import com.ft_transcendence.vigil.domain.dtos.telemetry.MetricSeriesResponse;
 import com.ft_transcendence.vigil.domain.dtos.telemetry.TelemetryPage;
 import com.ft_transcendence.vigil.serversentevents.LogSseRegistry;
@@ -128,9 +127,9 @@ public class TelemetryController {
 		);
 	}
 
-    @GetMapping("/attributes")
-    ResponseEntity<List<AttributeResponse>> getAttributes() {
-        return ResponseEntity.status(HttpStatus.OK).body(telemetryService.getAttributes());
+    @GetMapping("/metrics/names")
+    ResponseEntity<List<String>> getMetricNames() {
+        return ResponseEntity.status(HttpStatus.OK).body(telemetryService.getMetricNames());
     }
     @GetMapping("/logs/live")
     SseEmitter loveLogsHandler(@RequestParam(required = false) String service, @RequestParam(required = false) String severity)

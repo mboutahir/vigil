@@ -27,28 +27,25 @@ public class MetricsRepository {
 			FROM metrics
 			""";
 
+	// metric names seen in the last 7 days, for the alert rule form
+	// histograms have no single value and rules skip them, so we leave them out like the rule evaluation does
+	private static final String NAMES_SQL = """
+			SELECT DISTINCT name
+			FROM metrics
+			WHERE timestamp >= now() - INTERVAL 7 DAY AND value IS NOT NULL
+			ORDER BY name
+			""";
+
+	// one value per time slot: the average of the points in it, for every kind of metric
 	private static final String SERIES_SQL = """
-			WITH chart_points AS (
-				SELECT service, name, unit, value,
-					attributes['internal'] = 'true' AS is_internal,
-					toStartOfInterval(timestamp, toIntervalSecond(%1$d)) AS bucket,
-					if(metric_type = 'sum' AND is_monotonic, 'counter', 'gauge') AS kind,
-					lag(value) OVER (PARTITION BY series_id ORDER BY timestamp) AS previous_value,
-					-- if a counter goes from 100 to 130, we count 30 for this point
-					CASE
-						WHEN aggregation_temporality != 'cumulative' THEN value
-						WHEN value >= previous_value THEN value - previous_value
-					END AS counter_change
-				FROM metrics
-				%2$s
-			)
-			SELECT service, name, bucket,
+			SELECT service, name,
+				toStartOfInterval(timestamp, toIntervalSecond(%1$d)) AS bucket,
 				any(unit) AS series_unit,
-				any(kind) AS series_kind,
-				any(is_internal) AS series_internal,
-				-- counters show how much changed per second, gauges show the average
-				if(series_kind = 'counter', sum(counter_change) / %1$d, avg(value)) AS bucket_value
-			FROM chart_points
+				any(if(metric_type = 'sum' AND is_monotonic, 'counter', 'gauge')) AS series_kind,
+				any(attributes['internal'] = 'true') AS series_internal,
+				avg(value) AS bucket_value
+			FROM metrics
+			%2$s
 			GROUP BY service, name, bucket
 			ORDER BY name, service, bucket
 			""";
@@ -103,6 +100,15 @@ public class MetricsRepository {
 		return ClickHouseQuery.from(SELECT)
 				.eq("attributes['vigil.notification_id']", notificationId)
 				.list(jdbcTemplate, this::mapMetric, "metrics");
+	}
+
+	// alert rules match on the metric name, so the form lists the names the services really send
+	public List<String> findMetricNames() {
+		try {
+			return jdbcTemplate.queryForList(NAMES_SQL, String.class);
+		} catch (DataAccessException e) {
+			throw new TelemetryRepositoryException("Failed to query metric names from ClickHouse", e);
+		}
 	}
 
 	private ClickHouseQuery filtered(String service, String period, Boolean internalOnly) {
