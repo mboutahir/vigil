@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.function.Consumer;
 
+// we read logs from ClickHouse and can filter by time, service, severity, or message text
 @Repository
 public class LogRepository {
 
@@ -37,6 +38,8 @@ public class LogRepository {
 
         ClickHouseQuery query = filtered(period, service, severity, search);
 
+        // when sorting by time, the next page gets older logs
+        // when sorting by another column, offset tells us how many rows to skip
         if (sort == null || sort.isBlank() || sort.equals("timestamp"))
             query.before(before).orderBy("timestamp DESC").limit(count);
         else
@@ -45,6 +48,7 @@ public class LogRepository {
         return query.list(jdbcTemplate, this::mapLog, "logs");
     }
 
+    // for CSV we get all the matching logs, newest first
     public void streamAllLogs(
             String period,
             String service,
@@ -57,6 +61,7 @@ public class LogRepository {
                 .stream(jdbcTemplate, this::mapLog, consumer, "logs");
     }
 
+    // for alert analysis we read logs between these times, oldest first
     public List<Log> findLogs(String service, Instant from, Instant to) {
         return filtered(null, service, null, null)
                 .between(from, to)
@@ -64,6 +69,8 @@ public class LogRepository {
                 .list(jdbcTemplate, this::mapLog, "logs");
     }
 
+    // when the collector tells us it saved new logs, we find them by notification ID
+    // so the live page can show them
     public List<Log> findByNotificationId(String notificationId) {
         if (notificationId == null || notificationId.isBlank()) {
             throw new IllegalArgumentException("notificationId must not be blank");

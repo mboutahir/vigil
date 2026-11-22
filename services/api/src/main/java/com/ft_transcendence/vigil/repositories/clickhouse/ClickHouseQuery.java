@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+// the repos give us the SELECT and columns to filter or sort by
+// we build the rest of the query with ? and pass the values to JDBC separately
 final class ClickHouseQuery {
 
     private final String select;
@@ -52,6 +54,7 @@ final class ClickHouseQuery {
         return this;
     }
 
+    // we use ClickHouse's current time to look back, for example 1h becomes 1 HOUR
     ClickHouseQuery since(String period) {
         if (period != null && !period.isBlank())
             conditions.add("timestamp >= now() - INTERVAL " + interval(period));
@@ -103,6 +106,7 @@ final class ClickHouseQuery {
         }
     }
 
+    // we give the CSV writer one row at a time as we read it from ClickHouse
     <T> void stream(JdbcTemplate jdbcTemplate, RowMapper<T> mapper, Consumer<T> consumer, String signal) {
         try {
             jdbcTemplate.query(
@@ -114,11 +118,14 @@ final class ClickHouseQuery {
         }
     }
 
-    private String sql() {
-        StringBuilder sql = new StringBuilder(select);
+    String whereClause() {
+        if (conditions.isEmpty())
+            return "";
+        return " WHERE " + String.join(" AND ", conditions);
+    }
 
-        if (!conditions.isEmpty())
-            sql.append(" WHERE ").append(String.join(" AND ", conditions));
+    private String sql() {
+        StringBuilder sql = new StringBuilder(select).append(whereClause());
 
         if (orderBy != null)
             sql.append(" ORDER BY ").append(orderBy);
@@ -132,7 +139,7 @@ final class ClickHouseQuery {
         return sql.toString();
     }
 
-    private Object[] params() {
+    Object[] params() {
         List<Object> all = new ArrayList<>(params);
 
         if (limit != null)
@@ -148,6 +155,7 @@ final class ClickHouseQuery {
         return new TelemetryRepositoryException("Failed to query " + signal + " from ClickHouse", cause);
     }
 
+    // we turn the keys and values from the attributes column into strings
     static Map<String, String> attributes(ResultSet result) throws SQLException {
         Map<String, String> attributes = new LinkedHashMap<>();
         Object value = result.getObject("attributes");
