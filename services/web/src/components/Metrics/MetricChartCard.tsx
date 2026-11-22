@@ -32,10 +32,9 @@ export default function MetricChartCard({ group, services, period }: Data) {
   return (
     //box around  chart styling
     <div className="flex flex-col bg-vigil-card border border-vigil-border p-3 sm:p-4">
-    {/* title and if kind is counter add per second */}
+    {/* title: the metric name */}
       <div className="mono text-[12px] text-vigil-muted uppercase truncate mb-3">
         {group.name}
-        {group.kind === 'counter' && ' (per second)'}
       </div>
       {/* chart box styling */}
       <div className="h-56 mono">
@@ -91,7 +90,7 @@ export default function MetricChartCard({ group, services, period }: Data) {
               cursor={{ stroke: 'var(--vigil-muted)', strokeDasharray: '3' }}
               labelFormatter={(time) => new Date(Number(time)).toLocaleString()}
               formatter={(value, name) => [
-                formatMetricValue(Number(value), group.unit, group.kind),
+                formatMetricValue(Number(value), group.unit),
                 name,
               ]}
             />

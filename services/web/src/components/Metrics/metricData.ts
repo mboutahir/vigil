@@ -89,18 +89,8 @@ function formatBytes(bytes: number): string {
   return `${value.toFixed(index ? 1 : 0)} ${units[index]}`;
 }
 
-export function formatMetricValue(
-  value: number,
-  unit: string,
-  //default gauge
-  kind: MetricKind = 'gauge',
-): string {
-  //if kind is counter we clean unit example '{request}'	'req' we make req short it looks beter
-  if (kind === 'counter') {
-  const rateUnit = unit === '{request}' ? 'req' : cleanUnit(unit);
-    //return unit if it exists if not defaulr /s
-    return `${formatNumber(value)} ${rateUnit ? `${rateUnit}/s` : '/s'}`;
-  }
+//the chart shows the average of each time slot for every metric, so the value is formatted only by its unit
+export function formatMetricValue(value: number, unit: string): string {
   switch (unit) {
     case 'By':
       return formatBytes(value);
