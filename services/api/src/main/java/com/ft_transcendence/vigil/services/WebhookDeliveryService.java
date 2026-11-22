@@ -2,8 +2,6 @@ package com.ft_transcendence.vigil.services;
 
 import com.ft_transcendence.vigil.configuration.VigilProperties;
 import com.ft_transcendence.vigil.domain.entities.Alerts.AlertHistory;
-import com.ft_transcendence.vigil.domain.entities.Alerts.Severity;
-import com.ft_transcendence.vigil.domain.entities.Alerts.SignalType;
 import com.ft_transcendence.vigil.domain.entities.Webhook.Webhook;
 import com.ft_transcendence.vigil.repositories.webhook.WebhookRepository;
 import jakarta.annotation.PreDestroy;
@@ -26,6 +24,8 @@ import java.util.concurrent.Executors;
 @Slf4j
 @Service
 public class WebhookDeliveryService {
+    private static final int MAX_MESSAGE_LENGTH = 2_000;
+
     private final WebhookRepository webhookRepository;
     private final VigilProperties vigilProperties;
     private final WebhookUrlValidator webhookUrlValidator;
@@ -51,13 +51,15 @@ public class WebhookDeliveryService {
             return;
 
         UUID alertId = alertHistory.getId();
-        String title = alertHistory.getSeverity() + " alert: " + alertHistory.getMetricName() + " on " + alertHistory.getService();
-        String link = vigilProperties.getFrontendBaseUrl() + "/alerts?id=" + alertId;
-        WebhookRequestDto webhookRequestDto = new WebhookRequestDto(alertId, title, analysis, "alerting", link,
-                alertHistory.getService(), alertHistory.getMetricName(), alertHistory.getThreshold(), alertHistory.getSeverity(),
-                alertHistory.getTriggeredAt().toString(), alertHistory.getSignalType(), alertHistory.getWindowSeconds(),
-                alertHistory.getAggregation());
-        String requestBody = objectMapper.writeValueAsString(webhookRequestDto);
+        String message = alertHistory.getSeverity() + " alert: " + alertHistory.getMetricName()
+                + " on " + alertHistory.getService();
+        if (analysis != null && !analysis.isBlank())
+            message += "\n" + analysis;
+        String link = "\n" + vigilProperties.getFrontendBaseUrl() + "/alerts?alert=" + alertId;
+        int end = Math.min(message.length(), MAX_MESSAGE_LENGTH - link.length());
+        message = message.substring(0, end) + link;
+
+        String requestBody = objectMapper.writeValueAsString(new WebhookRequestDto(message, message));
         executor.execute(() -> {
             for (Webhook webhook : webhooks)
                 sendWebhook(webhook, alertId, requestBody);
@@ -90,19 +92,6 @@ public class WebhookDeliveryService {
         executor.shutdownNow();
     }
 
-    private record WebhookRequestDto(
-            UUID alertUid,
-            String title,
-            String message,
-            String state,
-            String linkToUpstreamDetails,
-            String service,
-            String metricName,
-            Double threshold,
-            Severity severity,
-            String triggeredAt,
-            SignalType signalType,
-            Integer windowSeconds,
-            String aggregation) {
+    private record WebhookRequestDto(String content, String text) {
     }
 }
