@@ -10,7 +10,7 @@ The goal is a small, private alternative to tools like Grafana or Datadog: one `
 
 ### Key features
 
-- **Service onboarding wizard:** choose a language, get the OpenTelemetry setup, the ingestion key and the CA certificate, then watch the first telemetry arrive live.
+- **Service onboarding wizard:** name your service and confirm its HTTPS address, follow the connection instructions, then verify the first live signal. Choose Docker Compose for container addresses, Dockerfile instructions, and Compose verification commands, or Bash for a host process. Services that already use OpenTelemetry can skip installation.
 - **Telemetry ingestion** over OTLP/HTTP through a custom-built OpenTelemetry Collector with deduplication and a storage confirmation step.
 - **Logs, Metrics and Traces pages** with live streaming, filters, pagination and CSV export, plus full-text search and sorting on logs.
 - **Overview dashboard** with KPIs, interactive charts, custom date ranges, live mode and a PDF report export.
