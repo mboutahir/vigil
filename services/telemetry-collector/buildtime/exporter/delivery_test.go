@@ -389,8 +389,8 @@ func TestDeliveryFailuresAndRecovery(tester *testing.T) {
 				tester.Fatalf("oversize: %v", err)
 			}
 
-			if len(storage.events) != 0 || len(exporter.dedup.entries) != 0 {
-				tester.Fatal("oversize reserved or inserted")
+			if len(storage.events) != 0 || len(exporter.recent) != 0 {
+				tester.Fatal("oversize changed dedup state or inserted")
 			}
 
 			exporter.Config.MaxSerializedBatchBytes = 1_048_576
@@ -400,7 +400,7 @@ func TestDeliveryFailuresAndRecovery(tester *testing.T) {
 				tester.Fatalf("insert error: %v", err)
 			}
 
-			if len(exporter.dedup.entries) != 0 || calls != 0 {
+			if len(exporter.recent) != 0 || calls != 0 {
 				tester.Fatal("failed insert retained keys or callback")
 			}
 
@@ -498,8 +498,8 @@ func TestSerializedByteBoundary(tester *testing.T) {
 
 }
 
-// TestPendingAndBusyDelivery checks the retryable error for a reserved key or a busy exporter.
-func TestPendingAndBusyDelivery(tester *testing.T) {
+// TestBusyDelivery checks the retryable error when another call owns the exporter.
+func TestBusyDelivery(tester *testing.T) {
 
 	exporter, storage := deliveryExporter(tester, func(responseWriter http.ResponseWriter, request *http.Request) {
 
@@ -507,28 +507,15 @@ func TestPendingAndBusyDelivery(tester *testing.T) {
 
 	})
 	input				:= signalInput("logs")
-	key					:= logDedupKey(LogRow{ServiceName: "b", Timestamp: eventTime, Severity: "unspecified", Message: "message", Attributes: map[string]string{"service.name": "b", "vigil.notification_id": "client-value"}})
-	reservation, _, err	:= exporter.dedup.reserve([]dedupKey{key}, exporter.now())
-
-	if err != nil {
-		tester.Fatal(err)
-	}
+	exporter.deliveryMu.Lock()
+	defer exporter.deliveryMu.Unlock()
 
 	if err := input.consume(context.Background(), exporter); !errors.Is(err, errDedupInFlight) || consumererror.IsPermanent(err) {
-		tester.Fatalf("pending duplicate: %v", err)
-	}
-
-	reservation.release()
-	exporter.deliveryMu.Lock()
-
-	if err := input.consume(context.Background(), exporter); !errors.Is(err, errDedupInFlight) {
 		tester.Fatalf("busy: %v", err)
 	}
 
-	exporter.deliveryMu.Unlock()
-
 	if len(storage.events) != 0 {
-		tester.Fatal("pending/busy inserted")
+		tester.Fatal("busy delivery inserted")
 	}
 
 }
