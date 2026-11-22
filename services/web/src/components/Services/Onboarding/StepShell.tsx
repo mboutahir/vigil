@@ -1,33 +1,25 @@
 import type { ReactNode } from 'react';
 
-type Props = {
-  stepNumber: number;
-  totalSteps: number;
+interface Data {
   title: string;
   description?: string;
   children: ReactNode;
-};
+}
 
-export default function StepShell({
-  stepNumber,
-  totalSteps,
-  title,
-  description,
-  children,
-}: Props) {
+export default function StepShell({ title, description, children }: Data) {
   return (
-    <section className="flex-1 min-h-0 overflow-y-auto">
-      <p className="text-[11px] tracking-[0.18em] text-vigil-accent uppercase mb-2">
-        step {String(stepNumber).padStart(2, '0')} /{' '}
-        {String(totalSteps).padStart(2, '0')}
-      </p>
-      <h2 className="text-[22px] md:text-[26px] font-semibold">{title}</h2>
-      {description && (
-        <p className="text-[13px] md:text-[14px] text-vigil-muted leading-6 mb-6">
-          {description}
-        </p>
-      )}
-      {children}
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <h2 className="mb-3 wrap-break-word text-[22px] font-semibold md:text-[26px]">
+        {title}
+      </h2>
+      <div className="relative min-h-0 overflow-y-auto overscroll-contain">
+        {description && (
+          <p className="mb-5 text-sm leading-6 text-vigil-muted">
+            {description}
+          </p>
+        )}
+        {children}
+      </div>
     </section>
   );
 }

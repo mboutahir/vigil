@@ -1,214 +1,172 @@
-export type InstrumentationSetup = 'recommended' | 'existing';
-export type ServiceLanguage =
-  | ''
-  | 'java'
-  | 'node'
-  | 'python'
-  | 'dotnet'
-  | 'go'
-  | 'other';
 export type TlsMode = 'unknown' | 'local' | 'public';
-export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
 
-export interface GuideStep {
-  title: string;
-  detail: string;
-  language?: string;
-  code?: string;
-  link?: string;
-  linkLabel?: string;
-}
+export const stepLabels = ['Service', 'Install', 'Connect', 'Verify'];
+export type OnboardingStep = 1 | 2 | 3 | 4;
 
-export interface InstrumentationGuide {
+export interface RuntimeGuide {
+  label: string;
+  install: string;
   docs: string;
-  steps: GuideStep[];
-  launch: {
-    title: string;
-    detail: string;
-    language?: string;
-    code?: string;
-  };
-}
-
-export interface TelemetryProfile {
+  command?: string;
+  launch?: string;
+  dockerInstall: string;
+  dockerfile?: string;
   caEnv?: string;
-  note: string;
-  caHelp: string;
 }
 
-export const STEP_LABELS: Record<OnboardingStep, string> = {
-  1: 'SETUP',
-  2: 'LANGUAGE',
-  3: 'INSTRUMENT',
-  4: 'NAME',
-  5: 'SECURE',
-  6: 'DETAILS',
-  7: 'CONFIGURE',
-  8: 'TRUST',
-  9: 'EXPORTER',
-  10: 'LAUNCH',
-  11: 'VERIFY',
-};
+export type ServiceLanguage = 'python' | 'node' | 'java' | 'other';
 
-export const instrumentationGuides: Record<
-  Exclude<ServiceLanguage, ''>,
-  InstrumentationGuide
-> = {
-  java: {
-    docs: 'https://opentelemetry.io/docs/zero-code/java/agent/getting-started/',
-    steps: [
-      {
-        title: 'Download the Java agent',
-        detail:
-          'Download the OpenTelemetry Java agent and place or mount it where the JVM can read it.',
-        link: 'https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases',
-        linkLabel: 'Java agent releases ↗',
-      },
-    ],
-    launch: {
-      title: 'Launch your instrumented service',
-      detail:
-        'Apply the generated environment variables, preserve existing JVM options, then launch the application normally.',
-      language: 'Shell',
-      code: 'java -jar myapp.jar',
-    },
-  },
-  node: {
-    docs: 'https://opentelemetry.io/docs/zero-code/js/',
-    steps: [
-      {
-        title: 'Install Node.js instrumentation',
-        detail:
-          'Install and activate the official Node.js auto-instrumentation package for your existing startup method.',
-        language: 'Shell',
-        code: 'npm install --save @opentelemetry/auto-instrumentations-node',
-      },
-    ],
-    launch: {
-      title: 'Launch your instrumented service',
-      detail:
-        'Apply the generated VIGIL connection settings and start the service using its normal command.',
-    },
-  },
+export const runtimeGuides: Record<ServiceLanguage, RuntimeGuide> = {
   python: {
+    label: 'Python',
+    install: 'Run these commands in the Python environment your service uses.',
+    command:
+      'python -m pip install opentelemetry-distro opentelemetry-exporter-otlp\nopentelemetry-bootstrap -a install',
+    launch: 'opentelemetry-instrument python myapp.py',
+    dockerInstall:
+      'In the final Python environment, add the RUN instructions after your application dependencies are installed. Prefix your existing startup command with opentelemetry-instrument. Replace myapp.py in this example with your entry point. If Compose overrides the image command, apply the same prefix there.',
+    dockerfile:
+      'RUN python -m pip install opentelemetry-distro opentelemetry-exporter-otlp\nRUN opentelemetry-bootstrap -a install\nCMD ["opentelemetry-instrument", "python", "myapp.py"]',
     docs: 'https://opentelemetry.io/docs/zero-code/python/',
-    steps: [
-      {
-        title: 'Install Python instrumentation',
-        detail:
-          'Install the OpenTelemetry distro and OTLP exporter, then bootstrap instrumentation for installed supported libraries.',
-        language: 'Shell',
-        code: 'python -m pip install opentelemetry-distro opentelemetry-exporter-otlp\nopentelemetry-bootstrap -a install',
-      },
-    ],
-    launch: {
-      title: 'Launch your instrumented service',
-      detail:
-        'Apply the generated environment variables and run the application through the OpenTelemetry wrapper.',
-      language: 'Shell',
-      code: 'opentelemetry-instrument python myapp.py',
-    },
-  },
-  dotnet: {
-    docs: 'https://opentelemetry.io/docs/languages/dotnet/exporters/',
-    steps: [
-      {
-        title: 'Install OpenTelemetry packages',
-        detail:
-          'Install the OpenTelemetry hosting, OTLP exporter, and instrumentation packages your service needs.',
-      },
-    ],
-    launch: {
-      title: 'Launch your instrumented service',
-      detail:
-        'Apply the generated environment variables, restart the application, and generate normal traffic.',
-      language: 'Shell',
-      code: 'dotnet run',
-    },
-  },
-  go: {
-    docs: 'https://opentelemetry.io/docs/languages/go/exporters/',
-    steps: [
-      {
-        title: 'Install and initialize OpenTelemetry',
-        detail:
-          'Add the OTLP/HTTP exporters and initialize the providers used by your application.',
-      },
-    ],
-    launch: {
-      title: 'Launch your instrumented service',
-      detail: 'Apply the generated settings and run the application normally.',
-      language: 'Shell',
-      code: 'go run .',
-    },
-  },
-  other: {
-    docs: 'https://opentelemetry.io/docs/languages/',
-    steps: [
-      {
-        title: 'Use your language OpenTelemetry SDK',
-        detail:
-          'Configure OTLP/HTTP exporters for the signals your application emits, then apply the VIGIL connection settings generated later.',
-      },
-    ],
-    launch: {
-      title: 'Launch your instrumented service',
-      detail:
-        'Apply the generated settings and start the application normally.',
-    },
-  },
-};
-
-export const existingInstrumentationGuide: InstrumentationGuide = {
-  docs: 'https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/',
-  steps: [
-    {
-      title: 'Keep your existing OpenTelemetry setup',
-      detail:
-        'Do not initialize another SDK or attach a second agent. Apply VIGIL connection settings to the exporter you already use.',
-    },
-  ],
-  launch: {
-    title: 'Restart your instrumented service',
-    detail:
-      'Apply the generated endpoint, authentication, service name, and trust settings, then restart normally and generate representative traffic.',
-  },
-};
-
-export const telemetryProfiles: Record<
-  Exclude<ServiceLanguage, ''>,
-  TelemetryProfile
-> = {
-  java: {
     caEnv: 'OTEL_EXPORTER_OTLP_CERTIFICATE',
-    note: 'The recommended setup uses the Java agent. Merge its JAVA_TOOL_OPTIONS value with any existing JVM options.',
-    caHelp:
-      'Point OTEL_EXPORTER_OTLP_CERTIFICATE to the VIGIL CA PEM file and keep hostname verification enabled.',
   },
   node: {
+    label: 'Node.js',
+    install: 'Install auto-instrumentation in your service directory.',
+    command: 'npm install --save @opentelemetry/auto-instrumentations-node',
+    dockerInstall:
+      'From the project directory, add the package as a production dependency and save the updated package.json and lockfile. Your image’s dependency-install step must include it. The generated NODE_OPTIONS activates it at startup.',
+    docs: 'https://opentelemetry.io/docs/zero-code/js/',
     caEnv: 'NODE_EXTRA_CA_CERTS',
-    note: 'Keep your normal Node.js startup command and apply VIGIL connection settings before the process starts.',
-    caHelp:
-      'NODE_EXTRA_CA_CERTS extends Node.js trust roots with the VIGIL CA PEM file.',
   },
-  python: {
+  java: {
+    label: 'Java',
+    install:
+      'Download the OpenTelemetry Java agent and place the JAR where your JVM can read it.',
+    dockerInstall:
+      'Download opentelemetry-javaagent.jar into your Docker build context. Copy it into the final image at the JAR path below. Keep your usual Java startup command.',
+    docs: 'https://opentelemetry.io/docs/zero-code/java/agent/getting-started/',
     caEnv: 'OTEL_EXPORTER_OTLP_CERTIFICATE',
-    note: 'The recommended setup launches through opentelemetry-instrument.',
-    caHelp: 'Point OTEL_EXPORTER_OTLP_CERTIFICATE to the VIGIL CA PEM file.',
-  },
-  dotnet: {
-    caEnv: 'OTEL_EXPORTER_OTLP_CERTIFICATE',
-    note: 'Use the exporter configuration already registered by your .NET service.',
-    caHelp: 'Point OTEL_EXPORTER_OTLP_CERTIFICATE to the VIGIL CA PEM file.',
-  },
-  go: {
-    note: 'Go exporter trust can be configured in code if your setup does not use a CA environment variable.',
-    caHelp:
-      'Pass the VIGIL CA through the exporter TLS credentials used by the sending process.',
   },
   other: {
-    note: 'Keep the application existing startup model and configure its OTLP/HTTP exporter.',
-    caHelp:
-      'Use the trusted-CA option supported by the SDK or exporter that opens the HTTPS connection.',
+    label: 'Other language',
+    install:
+      'Set up your language’s OpenTelemetry SDK with an OTLP/HTTP exporter.',
+    dockerInstall:
+      'Add the OpenTelemetry SDK and OTLP/HTTP exporter to your application dependencies. Install them during the image build and initialize the SDK in the process started by the container.',
+    docs: 'https://opentelemetry.io/docs/languages/',
   },
 };
+
+export function shellQuote(value: string) {
+  return "'" + value.replaceAll("'", "'\"'\"'") + "'";
+}
+
+interface ExporterSettings {
+  serviceName: string;
+  endpoint: string;
+  ingestionKey: string;
+  language: ServiceLanguage | '';
+  existing: boolean;
+  localTls: boolean;
+  privateCaMount: boolean;
+  caPath: string;
+  agentPath: string;
+}
+
+export type ExporterFormat = 'compose' | 'bash';
+
+function composeString(value: string) {
+  // Compose expands dollar signs even inside quoted YAML values.
+  return JSON.stringify(value.replaceAll('$', () => '$$'));
+}
+
+export function exporterConfig(
+  settings: ExporterSettings,
+  format: ExporterFormat,
+) {
+  const {
+    serviceName,
+    endpoint,
+    ingestionKey,
+    language,
+    existing,
+    localTls,
+    caPath,
+    agentPath,
+  } = settings;
+  const guide: RuntimeGuide | undefined = language
+    ? runtimeGuides[language]
+    : undefined;
+  const env: Record<string, string> = {
+    OTEL_SERVICE_NAME: serviceName,
+    OTEL_EXPORTER_OTLP_ENDPOINT: endpoint,
+    OTEL_EXPORTER_OTLP_PROTOCOL: 'http/protobuf',
+    OTEL_EXPORTER_OTLP_HEADERS:
+      'Authorization=Bearer%20' + encodeURIComponent(ingestionKey),
+  };
+  if (!existing) {
+    env.OTEL_TRACES_EXPORTER = 'otlp';
+    env.OTEL_METRICS_EXPORTER = 'otlp';
+    env.OTEL_LOGS_EXPORTER = 'otlp';
+    if (language === 'java')
+      env.JAVA_TOOL_OPTIONS = '-javaagent:"' + agentPath + '"';
+    if (language === 'node')
+      env.NODE_OPTIONS =
+        '--require @opentelemetry/auto-instrumentations-node/register';
+  }
+  const caEnv = existing ? 'OTEL_EXPORTER_OTLP_CERTIFICATE' : guide?.caEnv;
+  if (localTls && caEnv) env[caEnv] = caPath;
+
+  if (format === 'bash') {
+    return Object.entries(env)
+      .map(([name, value]) => {
+        const prefix =
+          name === 'JAVA_TOOL_OPTIONS' || name === 'NODE_OPTIONS'
+            ? '"${' + name + ':+$' + name + ' }"'
+            : '';
+        return `export ${name}=${prefix}${shellQuote(value)}`;
+      })
+      .join('\n');
+  }
+
+  const lines = ['    environment:'];
+  for (const [name, value] of Object.entries(env)) {
+    const yaml =
+      name === 'OTEL_EXPORTER_OTLP_HEADERS'
+        ? '"Authorization=Bearer%20${VIGIL_INGESTION_KEY:?Set VIGIL_INGESTION_KEY in .env}"'
+        : composeString(value);
+    lines.push(`      ${name}: ${yaml}`);
+  }
+  if (localTls) {
+    lines.push('    volumes:');
+    if (caPath.includes(':')) {
+      lines.push(
+        '      - type: bind',
+        '        source: ./certs/vigil-ca.crt',
+        `        target: ${composeString(caPath)}`,
+        '        read_only: true',
+        ...(settings.privateCaMount
+          ? ['        bind:', '          selinux: Z']
+          : []),
+      );
+    } else {
+      lines.push(
+        '      - ' +
+          composeString(
+            './certs/vigil-ca.crt:' +
+              caPath +
+              (settings.privateCaMount ? ':ro,Z' : ':ro'),
+          ),
+      );
+    }
+  }
+  const host = new URL(endpoint).hostname;
+  if (host === 'vigil.localhost' || host === 'host.docker.internal') {
+    lines.push(
+      '    extra_hosts:',
+      '      - ' + composeString(host + ':host-gateway'),
+    );
+  }
+  return lines.join('\n');
+}
