@@ -11,29 +11,23 @@ import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
+// we get the attribute keys and values seen in logs, metrics, and traces in the last 7 days
 @Repository
 public class AttributesRepository {
 
+    // put the three tables together, then get each key and its values
     private static final String SELECT = """
-            SELECT key, groupUniqArray(value) AS values
-            FROM
-            (
-                SELECT arrayJoin(mapKeys(attributes)) AS key, attributes[key] AS value
-                FROM logs
-                WHERE timestamp >= now() - INTERVAL 7 DAY
-
+            WITH all_attributes AS (
+                SELECT timestamp, attributes FROM logs
                 UNION ALL
-
-                SELECT arrayJoin(mapKeys(attributes)) AS key, attributes[key] AS value
-                FROM metrics
-                WHERE timestamp >= now() - INTERVAL 7 DAY
-
+                SELECT timestamp, attributes FROM metrics
                 UNION ALL
-
-                SELECT arrayJoin(mapKeys(attributes)) AS key, attributes[key] AS value
-                FROM traces
-                WHERE timestamp >= now() - INTERVAL 7 DAY
+                SELECT timestamp, attributes FROM traces
             )
+            SELECT key, groupUniqArray(attributes[key]) AS values
+            FROM all_attributes
+            ARRAY JOIN mapKeys(attributes) AS key
+            WHERE timestamp >= now() - INTERVAL 7 DAY
             GROUP BY key
             ORDER BY key
             """;

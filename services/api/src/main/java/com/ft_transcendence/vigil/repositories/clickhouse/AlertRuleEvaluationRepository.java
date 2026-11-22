@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.Timestamp;
 import java.time.Instant;
 
+// we get the number to check against the alert limit, like the error count
 @Repository
 public class AlertRuleEvaluationRepository {
     private final JdbcTemplate jdbcTemplate;
@@ -26,6 +27,8 @@ public class AlertRuleEvaluationRepository {
             return null;
 
         SignalType signalType = alertRule.getSignalType();
+        // we end at the newest timestamp from the new data and look back as far as the rule says
+        // the query only takes rows after the start, up to and including the end
         Instant windowStart = windowEnd.minusSeconds(alertRule.getWindowSeconds());
         String sql = """
                 SELECT count() AS row_count, %s AS rule_value
@@ -36,6 +39,8 @@ public class AlertRuleEvaluationRepository {
         String service = alertRule.getService();
         Timestamp startTimestamp = Timestamp.from(windowStart);
         Timestamp endTimestamp = Timestamp.from(windowEnd);
+        // we return null if there are no rows. if there are logs but none are errors,
+        // an error count rule still gets 0
         RowMapper<Double> ruleValueMapper = (result, rowNumber) -> {
             if (result.getLong("row_count") == 0)
                 return null;
@@ -54,6 +59,8 @@ public class AlertRuleEvaluationRepository {
         }
     }
 
+    // for logs and traces the rule name tells us what to count or calculate
+    // for metrics the rule picks how to use the values, like avg, max, or latest
     private static String getAggregationExpression(AlertRules alertRule) {
         SignalType signalType = alertRule.getSignalType();
         String aggregation = alertRule.getAggregation();
