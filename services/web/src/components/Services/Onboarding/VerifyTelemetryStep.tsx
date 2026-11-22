@@ -1,29 +1,26 @@
 import { Link } from 'react-router-dom';
 import Button from '../../shared/Button';
 import StepShell from './StepShell';
-import type { TelemetrySignals } from '../../../hooks/useTelemetryVerification';
+import useTelemetryVerification from '../../../hooks/useTelemetryVerification';
+import CodeSnippet from './CodeSnippet';
 
-interface Props {
-  stepNumber: number;
-  totalSteps: number;
+interface Data {
   serviceName: string;
-  received: TelemetrySignals;
-  hasAnyTelemetry: boolean;
-  allTelemetryReceived: boolean;
-  hasStreamError: boolean;
-  missingToken: boolean;
-  onRetry: () => void;
+  accessToken: string | null;
+  compose: boolean;
+  launch?: string;
+  reachabilityCommand: string;
   onAddAnother: () => void;
 }
 
 const buttonAnimation = 'transition-transform duration-150 active:scale-[0.98]';
 
-interface SignalProps {
+interface SignalData {
   name: string;
   received: boolean;
 }
 
-function SignalStatus({ name, received }: SignalProps) {
+function SignalStatus({ name, received }: SignalData) {
   return (
     <div
       className={`border px-3 py-2 text-[12px] ${
@@ -38,24 +35,46 @@ function SignalStatus({ name, received }: SignalProps) {
 }
 
 export default function VerifyTelemetryStep({
-  stepNumber,
-  totalSteps,
   serviceName,
-  received,
-  hasAnyTelemetry,
-  allTelemetryReceived,
-  hasStreamError,
-  missingToken,
-  onRetry,
+  accessToken,
+  launch,
+  compose,
+  reachabilityCommand,
   onAddAnother,
-}: Props) {
+}: Data) {
+  const {
+    received,
+    hasAnyTelemetry,
+    allTelemetryReceived,
+    hasStreamError,
+    missingToken,
+    retry,
+  } = useTelemetryVerification({ enabled: true, serviceName, accessToken });
   return (
     <StepShell
-      stepNumber={stepNumber}
-      totalSteps={totalSteps}
       title="Confirm telemetry is arriving"
-      description="Start your service with the generated configuration, then make a few requests so it produces telemetry."
+      description={
+        compose
+          ? 'Run this in the application’s Compose directory to apply the image, environment, and mount changes. Then send a request to the application and watch for its first signal.'
+          : 'Restart your service with the connection settings, then make a request. The first log, trace, or metric confirms the connection.'
+      }
     >
+      {compose && (
+        <div className="mb-4">
+          <CodeSnippet
+            label="Start from the Compose directory"
+            code="docker compose config --quiet && docker compose up -d --build"
+          />
+        </div>
+      )}
+      {!compose && launch && (
+        <div className="mb-4">
+          <CodeSnippet
+            label="Launch (replace myapp.py with your entry point)"
+            code={launch}
+          />
+        </div>
+      )}
       <div className="mb-5 flex flex-wrap gap-2">
         <SignalStatus name="Logs" received={received.logs} />
         <SignalStatus name="Traces" received={received.traces} />
@@ -103,7 +122,7 @@ export default function VerifyTelemetryStep({
           </p>
           <Button
             value="RETRY TELEMETRY CHECK"
-            onClick={onRetry}
+            onClick={retry}
             className={buttonAnimation}
           />
         </div>
@@ -149,6 +168,35 @@ export default function VerifyTelemetryStep({
           selected VIGIL address, OTLP/HTTP is being used, the ingestion header
           is present, and the exporter is not reporting TLS or connection
           errors.
+        </p>
+        {compose && (
+          <p className="mt-2 text-[13px] text-vigil-muted">
+            Choose the sending service from the names printed below. Check its
+            logs for exporter errors. The HTTPS check runs inside that container
+            and requires curl in its image.
+          </p>
+        )}
+        <CodeSnippet
+          label={
+            compose
+              ? 'Check the sending container'
+              : 'Test HTTPS from the sending service'
+          }
+          code={
+            compose
+              ? [
+                  'docker compose config --services',
+                  "printf 'Compose service: '",
+                  'read -r service',
+                  'docker compose logs --tail=50 -- "$service"',
+                  'docker compose exec -T -- "$service" ' + reachabilityCommand,
+                ].join('\n')
+              : reachabilityCommand
+          }
+        />
+        <p className="mt-2 text-[13px] text-vigil-muted">
+          An HTTP response such as 401 or 405 confirms the endpoint is reachable
+          over HTTPS.
         </p>
       </details>
     </StepShell>

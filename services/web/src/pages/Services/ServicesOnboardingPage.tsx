@@ -14,11 +14,6 @@ export default function ServicesOnboardingPage() {
           <h1 className="mb-2 text-[25px] font-semibold md:text-[36px]">
             Connect your first service
           </h1>
-          <p className="mx-auto text-[13px] leading-6 text-vigil-muted md:w-150 md:text-[15px]">
-            We'll guide you through instrumentation, a secure connection, and
-            verification. Keep this page open while VIGIL waits for your first
-            logs, traces, or metrics.
-          </p>
         </div>
         <ServiceOnboardingWizard
           firstStepActionLabel="skip for now"

@@ -149,7 +149,7 @@ function DashboardContent() {
         />
         <div
           id="dashboard-scroll-container"
-          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5"
+          className={`min-h-0 flex-1 p-3 sm:p-5 ${/^\/add-service\/?$/.test(location.pathname) ? 'flex flex-col overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}`}
         >
           <ErrorBoundary
             FallbackComponent={CrashPage}

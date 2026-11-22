@@ -1,194 +1,96 @@
+import { useState } from 'react';
 import useServiceOnboarding from '../../../hooks/useServiceOnboarding';
-import useTelemetryVerification from '../../../hooks/useTelemetryVerification';
 import { useAuth } from '../../../auth/authContext';
+import {
+  runtimeGuides,
+  shellQuote,
+  type RuntimeGuide,
+} from '../../../data/serviceOnboarding';
+import Button from '../../shared/Button';
+import InstallStep from './InstallStep';
 import ServiceSetupStep from './ServiceSetupStep';
-import ServiceLanguageStep from './ServiceLanguageStep';
-import InstrumentationStep from './InstrumentationStep';
-import ServiceNameStep from './ServiceNameStep';
-import SecureConnectionStep from './SecureConnectionStep';
-import ConnectionDetailsStep from './ConnectionDetailsStep';
 import TelemetryConfigStep from './TelemetryConfigStep';
-import CaAvailabilityStep from './CaAvailabilityStep';
-import ExporterTrustStep from './ExporterTrustStep';
-import LaunchServiceStep from './LaunchServiceStep';
 import VerifyTelemetryStep from './VerifyTelemetryStep';
 import OnboardingProgress from './OnboardingProgress';
-import OnboardingNavigation from './OnboardingNavigation';
 
-type Props = {
+interface Data {
   onExit: () => void;
   firstStepActionLabel: string;
   onAddAnother?: () => void;
-};
+}
 
-export default function ServiceOnboardingWizard({
-  onExit,
-  firstStepActionLabel,
-  onAddAnother,
-}: Props) {
+export default function ServiceOnboardingWizard(props: Data) {
+  const [session, setSession] = useState(0);
+  return (
+    <Wizard
+      key={session}
+      {...props}
+      onAddAnother={props.onAddAnother ?? (() => setSession(session + 1))}
+    />
+  );
+}
+
+function Wizard({ onExit, firstStepActionLabel, onAddAnother }: Data) {
   const { apiFetch, accessToken } = useAuth();
-  const onboarding = useServiceOnboarding(apiFetch);
-  const telemetry = useTelemetryVerification({
-    enabled: onboarding.step === 11,
-    serviceName: onboarding.serviceName,
-    accessToken,
-  });
-  const stepNumber = onboarding.currentIndex + 1;
-  const totalSteps = onboarding.activeSteps.length;
-
-  function renderStep() {
-    switch (onboarding.step) {
-      case 1:
-        return (
-          <ServiceSetupStep
-            stepNumber={stepNumber}
-            totalSteps={totalSteps}
-            setup={onboarding.setup}
-            onSetupChange={onboarding.setSetup}
-          />
-        );
-      case 2:
-        return (
-          <ServiceLanguageStep
-            stepNumber={stepNumber}
-            totalSteps={totalSteps}
-            language={onboarding.language}
-            onLanguageChange={onboarding.setLanguage}
-          />
-        );
-      case 3:
-        return (
-          <InstrumentationStep
-            stepNumber={stepNumber}
-            totalSteps={totalSteps}
-            guide={onboarding.currentGuide}
-            isJava={
-              onboarding.needsNewInstrumentation &&
-              onboarding.language === 'java'
-            }
-            javaAgentPath={onboarding.javaAgentPath}
-            onJavaAgentPathChange={onboarding.setJavaAgentPath}
-          />
-        );
-      case 4:
-        return (
-          <ServiceNameStep
-            stepNumber={stepNumber}
-            totalSteps={totalSteps}
-            serviceName={onboarding.serviceName}
-            onServiceNameChange={onboarding.setServiceName}
-          />
-        );
-      case 5:
-        return (
-          <SecureConnectionStep
-            stepNumber={stepNumber}
-            totalSteps={totalSteps}
-            serviceName={onboarding.serviceName}
-            address={onboarding.address}
-            verifiedAddress={onboarding.verifiedAddress}
-            tlsMode={onboarding.tlsMode}
-            caPath={onboarding.caPath}
-            isVerifyingAddress={onboarding.isVerifyingAddress}
-            verifyAddressError={onboarding.verifyAddressError}
-            tlsVerificationPending={onboarding.tlsVerificationPending}
-            tlsRetryAfterSeconds={onboarding.tlsRetryAfterSeconds}
-            onAddressChange={onboarding.setCustomAddress}
-            onUseLocalhost={onboarding.useLocalhost}
-            onVerifyAddress={onboarding.verifyAddress}
-            onCaPathChange={onboarding.setCaPath}
-          />
-        );
-      case 6:
-        return (
-          <ConnectionDetailsStep
-            stepNumber={stepNumber}
-            totalSteps={totalSteps}
-            address={onboarding.address}
-            caPath={onboarding.caPath}
-            localTls={onboarding.isLocalTls}
-          />
-        );
-      case 7:
-        return (
-          <TelemetryConfigStep
-            stepNumber={stepNumber}
-            totalSteps={totalSteps}
-            setup={onboarding.setup}
-            language={onboarding.language}
-            serviceName={onboarding.serviceName}
-            address={onboarding.address}
-            caPath={onboarding.caPath}
-            localTls={onboarding.isLocalTls}
-            ingestionKey={onboarding.ingestionKey}
-            javaAgentPath={onboarding.javaAgentPath}
-            profile={onboarding.profile}
-          />
-        );
-      case 8:
-        return (
-          <CaAvailabilityStep
-            stepNumber={stepNumber}
-            totalSteps={totalSteps}
-            caPath={onboarding.caPath}
-            onDownloadCa={onboarding.downloadCa}
-            isDownloadingCa={onboarding.isDownloadingCa}
-            downloadCaError={onboarding.downloadCaError}
-          />
-        );
-      case 9:
-        return (
-          <ExporterTrustStep
-            stepNumber={stepNumber}
-            totalSteps={totalSteps}
-            caPath={onboarding.caPath}
-            profile={onboarding.profile}
-            existingInstrumentation={!onboarding.needsNewInstrumentation}
-          />
-        );
-      case 10:
-        return (
-          <LaunchServiceStep
-            stepNumber={stepNumber}
-            totalSteps={totalSteps}
-            guide={onboarding.currentGuide}
-          />
-        );
-      case 11:
-        return (
-          <VerifyTelemetryStep
-            stepNumber={stepNumber}
-            totalSteps={totalSteps}
-            serviceName={onboarding.serviceName}
-            received={telemetry.received}
-            hasAnyTelemetry={telemetry.hasAnyTelemetry}
-            allTelemetryReceived={telemetry.allTelemetryReceived}
-            hasStreamError={telemetry.hasStreamError}
-            missingToken={telemetry.missingToken}
-            onRetry={telemetry.retry}
-            onAddAnother={onAddAnother ?? onboarding.reset}
-          />
-        );
-    }
-  }
+  const flow = useServiceOnboarding(apiFetch);
+  const { step } = flow;
+  const guide: RuntimeGuide | undefined =
+    !flow.existing && flow.language ? runtimeGuides[flow.language] : undefined;
 
   return (
     <>
-      <OnboardingProgress
-        activeSteps={onboarding.activeSteps}
-        currentIndex={onboarding.currentIndex}
-      />
+      <OnboardingProgress step={step} existing={flow.existing} />
       <div className="flex min-h-0 flex-1 flex-col border border-vigil-border bg-vigil-card p-5 md:p-7">
-        {renderStep()}
-        <OnboardingNavigation
-          isFirstStep={onboarding.isFirstStep}
-          isLastStep={onboarding.isLastStep}
-          issue={onboarding.issue}
-          firstStepActionLabel={firstStepActionLabel}
-          onBack={onboarding.back}
-          onExit={onExit}
-          onContinue={onboarding.next}
-        />
+        {step === 1 && <ServiceSetupStep flow={flow} />}
+        {step === 2 && <InstallStep flow={flow} />}
+        {step === 3 && <TelemetryConfigStep flow={flow} />}
+        {step === 4 && (
+          <VerifyTelemetryStep
+            serviceName={flow.serviceName}
+            accessToken={accessToken}
+            compose={flow.format === 'compose'}
+            launch={guide?.launch}
+            onAddAnother={onAddAnother ?? onExit}
+            reachabilityCommand={`curl -v --connect-timeout 5 --max-time 10${flow.localTls ? ' --cacert ' + shellQuote(flow.caPath) : ''} ${shellQuote(flow.endpoint + '/v1/logs')}`}
+          />
+        )}
+        <div className="mt-5 flex shrink-0 items-center justify-between gap-2">
+          <Button
+            value={step === 1 ? firstStepActionLabel : 'Back'}
+            onClick={step === 1 ? onExit : flow.back}
+            className="border! border-vigil-border! bg-transparent! text-vigil-muted!"
+          />
+          {step === 1 && (
+            <button
+              type="submit"
+              form="service-details"
+              disabled={
+                !flow.serviceName.trim() ||
+                !flow.address.trim() ||
+                flow.tls.isPending
+              }
+              className="cursor-pointer bg-vigil-accent px-5 py-3 text-[13px] font-medium uppercase text-vigil-on-accent disabled:opacity-50"
+            >
+              {flow.tls.isPending ? 'Checking address…' : 'Get instructions'}
+            </button>
+          )}
+          {step === 2 && (
+            <Button
+              value="Connection settings"
+              onClick={flow.next}
+              disabled={!flow.canInstall}
+              className="disabled:opacity-50"
+            />
+          )}
+          {step === 3 && (
+            <Button
+              value="Verify connection"
+              onClick={flow.next}
+              disabled={!flow.canConfigure || flow.tls.isPending}
+              className="disabled:opacity-50"
+            />
+          )}
+        </div>
       </div>
     </>
   );

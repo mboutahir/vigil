@@ -2,11 +2,6 @@ import axios from 'axios';
 import type { ApiFetch } from './api';
 import type { TlsMode } from '../data/serviceOnboarding';
 
-export interface ConfigKeys {
-  api_key: string;
-  ingestion_key: string;
-}
-
 type VerifiedTlsMode = Exclude<TlsMode, 'unknown'>;
 
 export interface ConfigureTlsAddressResponse {
@@ -50,17 +45,6 @@ function toError(error: unknown, fallback: string): Error {
   return new Error(fallback, {
     cause: error,
   });
-}
-
-async function getConfigKeys(apiFetch: ApiFetch): Promise<ConfigKeys> {
-  try {
-    const res = await apiFetch<ConfigKeys>('/config/keys', {
-      method: 'GET',
-    });
-    return res.data;
-  } catch (error) {
-    throw toError(error, 'Unable to fetch config keys.');
-  }
 }
 
 async function configureTlsAddress(
@@ -110,4 +94,4 @@ async function getTlsCa(apiFetch: ApiFetch): Promise<Blob> {
   }
 }
 
-export { getConfigKeys, configureTlsAddress, getTlsCa };
+export { configureTlsAddress, getTlsCa };

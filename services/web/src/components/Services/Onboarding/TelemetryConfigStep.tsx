@@ -1,93 +1,167 @@
-import Button from '../../shared/Button';
-import StepShell from './StepShell';
-import type {
-  InstrumentationSetup,
-  ServiceLanguage,
-  TelemetryProfile,
+import type { ServiceOnboarding } from '../../../hooks/useServiceOnboarding';
+import {
+  runtimeGuides,
+  type RuntimeGuide,
 } from '../../../data/serviceOnboarding';
-import { useState } from 'react';
+import Button from '../../shared/Button';
+import CodeSnippet from './CodeSnippet';
+import StepShell from './StepShell';
+import ServiceEnvironmentPicker from './ServiceEnvironmentPicker';
+import ExporterSnippet from './ExporterSnippet';
 
-type Props = {
-  stepNumber: number;
-  totalSteps: number;
-  setup: InstrumentationSetup;
-  language: ServiceLanguage;
-  serviceName: string;
-  address: string;
-  caPath: string;
-  localTls: boolean;
-  ingestionKey: string;
-  javaAgentPath: string;
-  profile: TelemetryProfile;
-};
+const inputStyle =
+  'mono mt-1 block w-full border border-vigil-border bg-vigil-card p-2.5 outline-none focus:border-vigil-accent';
 
-function shellQuote(value: string): string {
-  return "'" + value.replace(/'/g, "'\"'\"'") + "'";
+interface Data {
+  flow: ServiceOnboarding;
 }
 
-export default function TelemetryConfigStep({
-  stepNumber,
-  totalSteps,
-  setup,
-  language,
-  serviceName,
-  address,
-  caPath,
-  localTls,
-  ingestionKey,
-  javaAgentPath,
-  profile,
-}: Props) {
-  const lines = [
-    `export OTEL_SERVICE_NAME="${shellQuote(serviceName)}"`,
-    `export OTEL_EXPORTER_OTLP_ENDPOINT="${address}/otlp"`,
-    language === 'go' && setup === 'recommended'
-      ? null
-      : 'export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"',
-    `export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer%20${ingestionKey || '<ingestion_key>'}"`,
-    setup === 'recommended' ? 'export OTEL_TRACES_EXPORTER="otlp"' : null,
-    setup === 'recommended' ? 'export OTEL_METRICS_EXPORTER="otlp"' : null,
-    setup === 'recommended' ? 'export OTEL_LOGS_EXPORTER="otlp"' : null,
-    language === 'java' && setup === 'recommended'
-      ? `export JAVA_TOOL_OPTIONS="-javaagent:${javaAgentPath}"`
-      : null,
-    localTls && profile.caEnv ? `export ${profile.caEnv}="${caPath}"` : null,
-  ].filter(Boolean) as string[];
-
-  const config = lines.join('\n');
-
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    await navigator.clipboard.writeText(config);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }
+export default function TelemetryConfigStep({ flow }: Data) {
+  const { existing, language, caPath, localTls, download, keys } = flow;
+  const compose = flow.format === 'compose';
+  const guide: RuntimeGuide | undefined =
+    !existing && language ? runtimeGuides[language] : undefined;
+  const collectorConfig = [
+    'exporters:',
+    '  otlphttp/vigil:',
+    `    endpoint: ${JSON.stringify(flow.endpoint)}`,
+    '    headers:',
+    `      Authorization: ${JSON.stringify('Bearer ' + flow.ingestionKey)}`,
+    ...(localTls
+      ? ['    tls:', `      ca_file: ${JSON.stringify(caPath)}`]
+      : []),
+  ].join('\n');
 
   return (
-    <StepShell
-      stepNumber={stepNumber}
-      totalSteps={totalSteps}
-      title={`Telemetry configuration for ${serviceName}`}
-      description="Add these variables to the service runtime configuration and restart it. Treat the ingestion key as a secret."
-    >
-      <p className="text-[13px] text-vigil-muted mb-3">{profile.note}</p>
-      <div className="border border-vigil-border bg-vigil-surface-code">
-        <div className="flex justify-between items-center px-3 py-3 border-b border-vigil-border">
-          <span className="text-[12px] text-vigil-muted uppercase">Bash</span>
-          <Button
-            value={copied ? '✓' : 'copy configuration'}
-            onClick={copy}
-            className={`py-1.5! px-3! text-[11px]!`}
-          />
+    <StepShell title={`Connect ${flow.serviceName}`}>
+      <div className="space-y-5 text-sm">
+        <ServiceEnvironmentPicker
+          format={flow.format}
+          setFormat={flow.setFormat}
+        />
+        {flow.tls.isError && (
+          <p role="alert" className="text-sm text-vigil-state-danger-text">
+            {flow.tls.error.message}
+          </p>
+        )}
+        {flow.tls.data?.status === 'pending' && (
+          <p role="status" className="text-sm text-vigil-state-attention-text">
+            Certificate setup is pending. Try switching again shortly.
+          </p>
+        )}
+        {localTls && (
+          <div className="space-y-2 border-t border-vigil-border pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-semibold">Trust Vigil’s certificate</h3>
+              <Button
+                value={download.isPending ? 'Downloading…' : 'Download CA'}
+                onClick={() => download.mutate()}
+                disabled={download.isPending}
+                className="px-3! py-1.5! text-xs!"
+              />
+            </div>
+            <p className="text-vigil-muted">
+              {compose ? (
+                <>
+                  Save the download as <code>./certs/vigil-ca.crt</code> beside
+                  your Compose file. The generated mount makes it available at
+                  the container path below.
+                </>
+              ) : (
+                'Save or mount vigil-ca.crt at this path inside the service or Collector that sends telemetry.'
+              )}
+            </p>
+            <details className="text-[13px]">
+              <summary className="cursor-pointer text-vigil-accent">
+                Certificate settings · {caPath}
+              </summary>
+              <label className="block text-[13px]">
+                {compose
+                  ? 'Certificate path inside the container'
+                  : 'Certificate path'}
+                <input
+                  className={inputStyle}
+                  value={caPath}
+                  onChange={(e) => flow.setCaPath(e.target.value)}
+                />
+              </label>
+              {compose && (
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={flow.privateCaMount}
+                    onChange={(event) =>
+                      flow.setPrivateCaMount(event.target.checked)
+                    }
+                  />
+                  Apply a private SELinux label (:Z) to this service’s CA file
+                </label>
+              )}
+            </details>
+            {!caPath.startsWith('/') && (
+              <p role="status" className="text-vigil-state-attention-text">
+                Enter an absolute path, starting with /.
+              </p>
+            )}
+            {!guide?.caEnv && (
+              <p className="text-vigil-muted">
+                Set your exporter’s trusted CA file to this path.
+              </p>
+            )}
+            {download.isError && (
+              <p role="alert" className="text-vigil-state-danger-text">
+                {download.error.message}
+              </p>
+            )}
+          </div>
+        )}
+        <div className="border-t border-vigil-border pt-4">
+          <h3 className="font-semibold">Configure the exporter</h3>
+          <p className="mt-1 text-vigil-muted">
+            Apply these settings to your service environment. Keep the ingestion
+            key private.
+          </p>
+          {keys.isPending ? (
+            <p role="status">Loading ingestion key…</p>
+          ) : keys.isError || !flow.ingestionKey ? (
+            <div
+              role="alert"
+              className="mt-2 flex flex-wrap items-center gap-2"
+            >
+              <span>
+                {keys.error?.message ?? 'No ingestion key is available.'}
+              </span>
+              <Button
+                value="Retry"
+                onClick={() => void keys.refetch()}
+                disabled={keys.isFetching}
+              />
+            </div>
+          ) : (
+            flow.canConfigure && (
+              <>
+                <ExporterSnippet flow={flow} />
+                {existing && (
+                  <details className="mt-3">
+                    <summary className="cursor-pointer text-vigil-accent">
+                      Sending through an OpenTelemetry Collector?
+                    </summary>
+                    <p className="mt-2 text-vigil-muted">
+                      Keep the service name on your application. Add this
+                      exporter to the Collector pipelines that forward its
+                      signals.
+                    </p>
+                    <CodeSnippet
+                      label="Collector configuration"
+                      code={collectorConfig}
+                    />
+                  </details>
+                )}
+              </>
+            )
+          )}
         </div>
-        <pre className="p-3 text-[14px] overflow-x-auto whitespace-pre-wrap">
-          {config}
-        </pre>
       </div>
-      <p className="text-[14px] text-vigil-state-attention-text mt-4">
-        Server-side only: never put the ingestion key in browser JavaScript.
-      </p>
     </StepShell>
   );
 }
