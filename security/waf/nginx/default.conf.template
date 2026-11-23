@@ -20,6 +20,13 @@ server {
         client_max_body_size 13m;
         include includes/proxy_backend.conf;
     }
+    # caddy's public root certificate (copied to the shared volume by the proxy entrypoint), never a key
+    location = /config/tls/ca {
+        alias /etc/vigil/ca/root.crt;
+        default_type application/x-pem-file;
+        add_header Content-Disposition 'attachment; filename="vigil-ca.crt"' always;
+        add_header Cache-Control no-store always;
+    }
     # Buffering is disabled for every API response, including telemetry GET SSE
     # and POST /api/alerts/{id}/ask; no endpoint-specific bypass of ModSecurity.
     location /api/ {
