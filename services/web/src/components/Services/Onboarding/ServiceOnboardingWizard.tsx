@@ -64,14 +64,10 @@ function Wizard({ onExit, firstStepActionLabel, onAddAnother }: Data) {
             <button
               type="submit"
               form="service-details"
-              disabled={
-                !flow.serviceName.trim() ||
-                !flow.address.trim() ||
-                flow.tls.isPending
-              }
+              disabled={!flow.serviceName.trim()}
               className="cursor-pointer bg-vigil-accent px-5 py-3 text-[13px] font-medium uppercase text-vigil-on-accent disabled:opacity-50"
             >
-              {flow.tls.isPending ? 'Checking address…' : 'Get instructions'}
+              Get instructions
             </button>
           )}
           {step === 2 && (
@@ -86,7 +82,7 @@ function Wizard({ onExit, firstStepActionLabel, onAddAnother }: Data) {
             <Button
               value="Verify connection"
               onClick={flow.next}
-              disabled={!flow.canConfigure || flow.tls.isPending}
+              disabled={!flow.canConfigure}
               className="disabled:opacity-50"
             />
           )}

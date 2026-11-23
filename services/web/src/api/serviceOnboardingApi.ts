@@ -1,19 +1,4 @@
 import axios from 'axios';
-import type { ApiFetch } from './api';
-import type { TlsMode } from '../data/serviceOnboarding';
-
-type VerifiedTlsMode = Exclude<TlsMode, 'unknown'>;
-
-export interface ConfigureTlsAddressResponse {
-  address: string;
-  configured: boolean;
-  status: 'verified' | 'pending';
-  tls_mode?: VerifiedTlsMode;
-  otlp_endpoint?: string;
-  ca_download_url?: string | null;
-  code?: string;
-  retry_after_seconds?: number;
-}
 
 interface ApiError {
   message?: string;
@@ -47,45 +32,10 @@ function toError(error: unknown, fallback: string): Error {
   });
 }
 
-async function configureTlsAddress(
-  apiFetch: ApiFetch,
-  address: string,
-): Promise<ConfigureTlsAddressResponse> {
+// served by the WAF's nginx outside /api, so it needs no login
+async function getTlsCa(): Promise<Blob> {
   try {
-    const res = await apiFetch<ConfigureTlsAddressResponse>(
-      '/config/tls/addresses',
-      {
-        method: 'POST',
-        data: {
-          address,
-        },
-      },
-    );
-
-    const data = res.data;
-    if (data.status === 'verified' && !data.tls_mode) {
-      throw new Error('VIGIL verified the address but returned no TLS mode.');
-    }
-    return data;
-  } catch (error) {
-    if (axios.isAxiosError<ConfigureTlsAddressResponse>(error)) {
-      const data = error.response?.data;
-      if (
-        error.response?.status === 409 &&
-        data?.status === 'verified' &&
-        data.tls_mode
-      ) {
-        return data;
-      }
-    }
-    throw toError(error, 'Unable to configure TLS address.');
-  }
-}
-
-async function getTlsCa(apiFetch: ApiFetch): Promise<Blob> {
-  try {
-    const res = await apiFetch<Blob>('/config/tls/ca', {
-      method: 'GET',
+    const res = await axios.get<Blob>('/config/tls/ca', {
       responseType: 'blob',
     });
     return res.data;
@@ -94,4 +44,4 @@ async function getTlsCa(apiFetch: ApiFetch): Promise<Blob> {
   }
 }
 
-export { configureTlsAddress, getTlsCa };
+export { getTlsCa };

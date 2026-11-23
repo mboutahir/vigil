@@ -1,5 +1,3 @@
-export type TlsMode = 'unknown' | 'local' | 'public';
-
 export const stepLabels = ['Service', 'Install', 'Connect', 'Verify'];
 export type OnboardingStep = 1 | 2 | 3 | 4;
 

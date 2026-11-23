@@ -39,16 +39,6 @@ export default function TelemetryConfigStep({ flow }: Data) {
           format={flow.format}
           setFormat={flow.setFormat}
         />
-        {flow.tls.isError && (
-          <p role="alert" className="text-sm text-vigil-state-danger-text">
-            {flow.tls.error.message}
-          </p>
-        )}
-        {flow.tls.data?.status === 'pending' && (
-          <p role="status" className="text-sm text-vigil-state-attention-text">
-            Certificate setup is pending. Try switching again shortly.
-          </p>
-        )}
         {localTls && (
           <div className="space-y-2 border-t border-vigil-border pt-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
