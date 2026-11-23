@@ -1,6 +1,6 @@
 # Vigil telemetry collector
 
-Vigil’s OpenTelemetry Collector receives OTLP logs, metrics, and traces over HTTP. Its custom `vigilclickhouse` exporter converts telemetry into ClickHouse rows, checks that the rows can be queried, and sends a batch notification to the Vigil API. The notification lets the API stream the stored telemetry and evaluate alert rules.
+Vigil’s OpenTelemetry Collector receives OTLP logs, metrics, and traces over HTTP. Its custom `vigil` exporter converts telemetry into ClickHouse rows, checks that the rows can be queried, and sends a batch notification to the Vigil API. The notification lets the API stream the stored telemetry and evaluate alert rules.
 
 ## How the collector runs concurrently
 
@@ -48,7 +48,7 @@ flowchart LR
     Proxy -->|"HTTP :4318/v1/{signal}"| Receiver["OTLP receiver and bearer auth"]
     Receiver --> Limiter["Memory limiter"]
     Limiter --> Batch["Batch processor"]
-    Batch --> Exporter["vigilclickhouse"]
+    Batch --> Exporter["vigil"]
     Exporter -->|"Insert rows, then verify count"| ClickHouse
     Exporter -->|"POST batch metadata after verification"| API["Vigil API on :8081"]
     API -->|"Read by notification ID"| ClickHouse
@@ -62,11 +62,11 @@ The main stack routes `/otlp/v1/logs`, `/otlp/v1/metrics`, and `/otlp/v1/traces`
 2. [The builder manifest](buildtime/builder-config.yaml) names the distribution `vigcol` and writes it to `/home/ocb/dist`. It selects the environment and file configuration providers, OTLP receiver, memory limiter, batch processor, bearer-token authentication extension, and Vigil exporter. Its module replacement resolves the exporter import to the copied source at `/home/ocb/exporter`.
 3. The runtime stage uses a nonroot distroless image with the binary at `/vigcol`. It exposes port `4318` and defaults to `/vigcol --config /etc/vigcol/config.yaml`.
 4. In the [main Compose stack](../../docker-compose.yml), the Collector waits for ClickHouse initialization and a healthy Vault agent, then starts with `--config /run/secrets/collector-config.yaml`. The [Vault agent](../../security/vault/agent/collector.hcl) renders the [Collector configuration template](../../security/vault/agent/collector-config.tpl) and the ingestion key file into the mounted directory. The template puts the ClickHouse password into YAML using JSON quoting and escapes dollar signs for Collector configuration expansion.
-5. [The exporter factory](buildtime/exporter/factory.go) registers `vigilclickhouse` at the Collector's development stability level for all three signals. Each of the three factory functions calls `newExporter` and gets its own clients, deduplication state, and pending batches.
+5. [The exporter factory](buildtime/exporter/factory.go) registers `vigil` at the Collector's development stability level for all three signals. Each of the three factory functions calls `newExporter` and gets its own clients, deduplication state, and pending batches.
 
 ### Runtime components and settings
 
-The `logs`, `metrics`, and `traces` pipelines all run `otlp → memory_limiter → batch → vigilclickhouse`. The memory limiter checks every second and applies the configured memory and spike limits. The batch processor flushes on its five-second timeout or when its 1,000-item send threshold is reached and caps outgoing batches at 5,000 items. The exporter applies a separate byte limit to the converted JSON rows. The bearer-token extension is both listed under `service.extensions` and referenced by the receiver.
+The `logs`, `metrics`, and `traces` pipelines all run `otlp → memory_limiter → batch → vigil`. The memory limiter checks every second and applies the configured memory and spike limits. The batch processor flushes on its five-second timeout or when its 1,000-item send threshold is reached and caps outgoing batches at 5,000 items. The exporter applies a separate byte limit to the converted JSON rows. The bearer-token extension is both listed under `service.extensions` and referenced by the receiver.
 
 | Setting | Source and validation |
 | --- | --- |
@@ -80,7 +80,7 @@ The `logs`, `metrics`, and `traces` pipelines all run `otlp → memory_limiter �
 | Receiver ingestion key | The bundled runtime config uses `VIGIL_INGESTION_KEY` from the environment. The Vault-rendered config reads `/run/secrets/VIGIL_INGESTION_KEY`. |
 | Memory limits | `COLLECTOR_MEMORY_LIMIT_MIB` and `COLLECTOR_MEMORY_SPIKE_LIMIT_MIB`. Main Compose fallbacks are 384 MiB and 96 MiB. |
 
-[`Config.Validate`](buildtime/exporter/config.go) checks settings without contacting either service. [`newExporter`](buildtime/exporter/exporter.go) runs validation, initializes the ClickHouse client, an HTTP callback client, the recent-key map, and the production clock, UUID generator, and retry wait function. With a Collector meter provider, it creates the `vigil.exporter.callback.failures` counter under the `vigilclickhouse` meter. The lifecycle `Start` method returns immediately and connections open on demand. `Shutdown` closes idle connections. `Capabilities` declares that the exporter leaves the original telemetry intact.
+[`Config.Validate`](buildtime/exporter/config.go) checks settings without contacting either service. [`newExporter`](buildtime/exporter/exporter.go) runs validation, initializes the ClickHouse client, an HTTP callback client, the recent-key map, and the production clock, UUID generator, and retry wait function. With a Collector meter provider, it creates the `vigil.exporter.callback.failures` counter under the existing `vigilclickhouse` meter. The lifecycle `Start` method returns immediately and connections open on demand. `Shutdown` closes idle connections. `Capabilities` declares that the exporter leaves the original telemetry intact.
 
 ## OTLP to ClickHouse rows
 

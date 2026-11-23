@@ -20,7 +20,7 @@ processors:
     send_batch_size: 1000
     send_batch_max_size: 5000
 exporters:
-  vigilclickhouse:
+  vigil:
     clickhouse_endpoint: ${env:CLICKHOUSE_ENDPOINT}
     clickhouse_database: ${env:CLICKHOUSE_DATABASE}
     clickhouse_username: ${env:CLICKHOUSE_USERNAME}
@@ -35,13 +35,13 @@ service:
     logs:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [vigilclickhouse]
+      exporters: [vigil]
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [vigilclickhouse]
+      exporters: [vigil]
     traces:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [vigilclickhouse]
+      exporters: [vigil]
 {{ end }}

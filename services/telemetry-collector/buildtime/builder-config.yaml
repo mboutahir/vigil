@@ -18,7 +18,7 @@ processors:
 exporters:
   # OCB uses the module version for its generated build and the local source via replaces.
   - gomod: github.com/ft-transcendence-vigil/vigil/services/telemetry-collector/buildtime/exporter v1.3.3-7
-    name: vigilclickhouseexporter
+    name: vigilexporter
 
 extensions:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.160.0

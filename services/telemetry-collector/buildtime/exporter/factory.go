@@ -7,11 +7,11 @@ import (
 	"time"
 )
 
-// NewFactory registers vigilclickhouse as a Collector exporter for logs, metrics, and traces.
+// NewFactory registers vigil as a Collector exporter for logs, metrics, and traces.
 func NewFactory() collexporter.Factory {
 
 	return collexporter.NewFactory(
-		collcomponent.MustNewType("vigilclickhouse"),
+		collcomponent.MustNewType("vigil"),
 		createDefaultConfig,
 		collexporter.WithLogs(createLogs, collcomponent.StabilityLevelDevelopment),
 		collexporter.WithMetrics(createMetrics, collcomponent.StabilityLevelDevelopment),

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Config maps the vigilclickhouse YAML block to ClickHouse, callback, and delivery settings.
+// Config maps the vigil YAML block to ClickHouse, callback, and delivery settings.
 type Config struct {
 
 	ClickHouseEndpoint		string			`mapstructure:"clickhouse_endpoint"`
