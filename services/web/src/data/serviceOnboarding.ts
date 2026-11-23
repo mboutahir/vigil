@@ -41,6 +41,8 @@ export const runtimeGuides: Record<ServiceLanguage, RuntimeGuide> = {
     label: 'Java',
     install:
       'Download the OpenTelemetry Java agent and place the JAR where your JVM can read it.',
+    command:
+      'curl -L -O https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar',
     dockerInstall:
       'Download opentelemetry-javaagent.jar into your Docker build context. Copy it into the final image at the JAR path below. Keep your usual Java startup command.',
     docs: 'https://opentelemetry.io/docs/zero-code/java/agent/getting-started/',

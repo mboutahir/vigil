@@ -57,7 +57,7 @@ export default function InstallStep({ flow }: Data) {
                 Installation guide ↗
               </a>
             </p>
-            {guide.command && (!compose || language === 'node') && (
+            {guide.command && (!compose || language === 'node' || language === 'java') && (
               <CodeSnippet
                 label={compose ? 'Run in the project directory' : 'Install'}
                 code={guide.command}
