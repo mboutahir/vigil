@@ -81,10 +81,10 @@ export default function TraceDetails({ span, traceSpans }: Data) {
             {spans.map((s) => (
               <div key={s.span_id} className="flex items-center gap-3 text-[12px]">
                 <span
-                  title={`${s.service} · ${s.name}`}
+                  title={s.name}
                   className="w-48 shrink-0 truncate text-vigil-muted"
                 >
-                  {s.service} · {s.name}
+                  {s.name}
                 </span>
                 {/* the track is the whole trace, the bar is where this span ran inside it */}
                 <div className="relative flex-1 h-3 bg-vigil-panel">
