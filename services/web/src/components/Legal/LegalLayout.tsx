@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import Logo from '../shared/Logo';
 
 type Props = {
@@ -42,15 +42,12 @@ export default function LegalLayout({
     <div className="min-h-screen bg-vigil-surface-legal text-vigil-text-legal">
       <header className="sticky top-0 z-10 border-b border-vigil-border-legal bg-vigil-surface-legal/90 backdrop-blur py-2">
         <div className="mx-auto flex max-w-205 flex-wrap items-center justify-between gap-4 px-6 py-3.5">
-          <Link to="/" aria-label="Vigil home">
-            <Logo className="text-3xl px-4 py-1" />
-          </Link>
+          <Logo className="text-3xl px-4 py-1" />
           <div className="text-sm uppercase tracking-[0.12em] text-vigil-muted">
             <LegalNavigation />
           </div>
         </div>
       </header>
-
       <main className="mx-auto max-w-205 px-6 pb-12">
         <article>
           <p className="mt-12 mb-2 text-xs uppercase tracking-[0.18em] text-vigil-muted">
@@ -68,7 +65,6 @@ export default function LegalLayout({
           </div>
         </article>
       </main>
-
       <footer className="mx-auto flex max-w-205 flex-wrap justify-between gap-3 border-t border-vigil-border-legal px-6 py-6 text-xs uppercase tracking-[0.14em] text-vigil-muted">
         <span>Vigil Observability · Secure Access</span>
         <LegalNavigation />
