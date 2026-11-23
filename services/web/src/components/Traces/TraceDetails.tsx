@@ -32,9 +32,11 @@ export default function TraceDetails({ span, traceSpans }: Data) {
     (key) => [key, span.attributes[key]],
   );
   //waterfall: timestamp is when a span started, so its bar starts at (start - trace start) and is as long as its duration
-  //sort by start time so parents come before the calls they made
+  //sort by start time so parents come before the calls they made, and the root first when they start at the same time
   const spans = [...traceSpans].sort(
-    (a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp),
+    (a, b) =>
+      Date.parse(a.timestamp) - Date.parse(b.timestamp) ||
+      Number(Boolean(a.parent_span_id)) - Number(Boolean(b.parent_span_id)),
   );
   const traceStart = Math.min(...spans.map((s) => Date.parse(s.timestamp)));
   const traceEnd = Math.max(
@@ -69,24 +71,27 @@ export default function TraceDetails({ span, traceSpans }: Data) {
         </div>
       )}
       {/* one bar per span of this trace, only the spans already loaded in the table */}
-      {spans.length > 1 && (
+      {/* shown even with one span, then the request is just one full bar */}
+      {spans.length > 0 && (
         <div>
           <div className="uppercase mb-2 text-[12px] text-vigil-muted-extra tracking-wider">
-            {`Trace (${spans.length} spans loaded)`}
+            {`Trace (${spans.length} span${spans.length === 1 ? '' : 's'} loaded)`}
           </div>
           <div className="space-y-1.5">
             {spans.map((s) => (
               <div key={s.span_id} className="flex items-center gap-3 text-[12px]">
                 <span
                   title={`${s.service} · ${s.name}`}
-                  className={`w-48 shrink-0 truncate ${s.span_id === span.span_id ? 'text-vigil-accent' : 'text-vigil-muted'}`}
+                  //the span you clicked has a bold white label
+                  className={`w-48 shrink-0 truncate ${s.span_id === span.span_id ? 'text-vigil-text font-semibold' : 'text-vigil-muted'}`}
                 >
                   {s.service} · {s.name}
                 </span>
                 {/* the track is the whole trace, the bar is where this span ran inside it */}
                 <div className="relative flex-1 h-3 bg-vigil-panel">
                   <div
-                    className={`absolute inset-y-0 ${s.status === 'error' ? 'bg-vigil-critical' : s.span_id === span.span_id ? 'bg-vigil-accent' : 'bg-vigil-muted'}`}
+                    //red for errors, blue for the root span (the whole request, no parent), grey for the calls inside it
+                    className={`absolute inset-y-0 ${s.status === 'error' ? 'bg-vigil-critical' : !s.parent_span_id ? 'bg-vigil-accent' : 'bg-vigil-muted'}`}
                     style={{
                       left: `${((Date.parse(s.timestamp) - traceStart) / total) * 100}%`,
                       width: `${Math.max(1, (s.duration_ms / total) * 100)}%`,
