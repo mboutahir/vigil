@@ -82,8 +82,7 @@ export default function TraceDetails({ span, traceSpans }: Data) {
               <div key={s.span_id} className="flex items-center gap-3 text-[12px]">
                 <span
                   title={`${s.service} · ${s.name}`}
-                  //the span you clicked has a bold white label
-                  className={`w-48 shrink-0 truncate ${s.span_id === span.span_id ? 'text-vigil-text font-semibold' : 'text-vigil-muted'}`}
+                  className="w-48 shrink-0 truncate text-vigil-muted"
                 >
                   {s.service} · {s.name}
                 </span>
