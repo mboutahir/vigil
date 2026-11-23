@@ -112,8 +112,8 @@ export function formatAxisValue(value: number, unit: string): string {
   //we turn value to a string notation: 'compact' shorten big nums 12500  12.5K
   return value.toLocaleString(undefined, {
     notation: 'compact',
-    //at most one num after column expect for 0
-    maximumFractionDigits: 1,
+    //keeps at most 3 digits starting from the first non-zero digit
+    maximumSignificantDigits: 3,
   });
 }
 
