@@ -9,7 +9,7 @@ interface Data {
 export default function WebhookRow({ url, onDelete }: Data) {
   return (
     <tr className="border-b border-vigil-border hover:bg-vigil-row-hover transition-colors duration-200">
-      <td className="text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3">
+      <td className="break-all text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3">
         {url}
       </td>
       <td className="py-2 md:py-3 px-2 md:px-3 space-x-2">

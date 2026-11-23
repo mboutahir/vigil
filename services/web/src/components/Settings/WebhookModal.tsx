@@ -33,10 +33,12 @@ export default function WebhookModal(props: Data) {
             className="outline-none px-4 py-2.5 w-full border border-vigil-border focus:border-vigil-accent"
           />
           <div className="text-vigil-muted-extra text-[13px] -mt-4.5 tracking-wide">
-            Must be a valid https:// URL.
+            Only Discord and Slack webhooks are supported. Use an HTTPS URL.
           </div>
           {form.formError && (
-            <p className="mt-3 text-sm text-vigil-state-danger-text">{form.formError}</p>
+            <p className="mt-3 text-sm text-vigil-state-danger-text">
+              {form.formError}
+            </p>
           )}
         </div>
         <div className="border-t border-t-vigil-border px-6 py-3.5 text-right space-x-3">

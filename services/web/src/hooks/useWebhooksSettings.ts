@@ -60,8 +60,8 @@ export default function useWebhooksSettings({ onClose }: Data) {
 
     try {
       const validUrl = new URL(normalizedUrl);
-      if (!validUrl.hostname) {
-        setUrlError('Enter a valid URL');
+      if (!['discord.com', 'hooks.slack.com'].includes(validUrl.hostname)) {
+        setUrlError('Enter a Discord or Slack webhook URL.');
         return false;
       }
     } catch {
