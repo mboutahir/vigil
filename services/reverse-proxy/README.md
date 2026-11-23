@@ -16,12 +16,9 @@ The `Caddyfile` serves these names, all signed by the local CA:
 
 The API's `TlsConfigService` accepts exactly these names in the onboarding wizard. To support another local name, add it to the site line in the `Caddyfile` and to `TlsConfigService.LOCAL_HOSTS`.
 
-## Wizard endpoints
+## Wizard endpoint
 
-Both endpoints are admin-only:
-
-- `POST /api/config/tls/addresses` with `{"address": "https://vigil.localhost:8443"}` checks that the address is one of the served names. It returns `200` with `status: "verified"`, `tls_mode: "local"`, the OTLP endpoint and the CA download URL. Any other name returns `400` with the list of supported names.
-- `GET /api/config/tls/ca` downloads the local CA's public certificate as `vigil-ca.crt`. Only parsed CA certificates are returned. Private keys and other PEM content never are.
+- `GET /config/tls/ca` downloads the local CA's public certificate as `vigil-ca.crt`. The WAF's nginx serves it straight from the read-only `caddy_public_ca` volume, which only ever holds `root.crt`, never a private key. It needs no login: the root certificate is public by nature.
 
 ## Public CA export
 

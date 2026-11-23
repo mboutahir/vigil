@@ -13,7 +13,7 @@
 			respond 404
 		}
 
-		@waf path /api/* /otlp/*
+		@waf path /api/* /otlp/* /config/tls/ca
 		handle @waf {
 			reverse_proxy waf:8080 {
 				# Caddy is the public trust boundary; never accept a client-chosen IP.
@@ -31,7 +31,6 @@
 }
 
 # self-hosted: every name is signed by caddy's local CA
-# keep this list in sync with TlsConfigService.LOCAL_HOSTS in the API
 localhost, vigil.localhost, host.docker.internal {
 	tls internal
 	import vigil-routes
