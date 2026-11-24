@@ -5,6 +5,7 @@ import com.ft_transcendence.vigil.domain.entities.Role;
 import com.ft_transcendence.vigil.domain.entities.UsersAuth.User;
 import com.ft_transcendence.vigil.domain.entities.UserPrincipal;
 import com.ft_transcendence.vigil.exceptions.DuplicatedResourcesException;
+import com.ft_transcendence.vigil.exceptions.ForbiddenException;
 import com.ft_transcendence.vigil.exceptions.ResourcesNotFoundException;
 import com.ft_transcendence.vigil.mappers.UsersGetResponseMapper;
 import com.ft_transcendence.vigil.repositories.UsersAuth.UserRepository;
@@ -90,6 +91,9 @@ public class UsersService {
     }
     @Transactional
     public void usersDeleteIdService(UUID id) {
+        UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (userPrincipal.getUser().getId().equals(id))
+            throw new ForbiddenException("you can't delete you own account");
         User user = userRepository.findById(id).orElseThrow(()->new ResourcesNotFoundException("user not found"));
         if (user.getRole() == Role.ADMIN && userRepository.countByRole(Role.ADMIN) == 1)
             throw new DuplicatedResourcesException("cannot delete the last remaining admin");
