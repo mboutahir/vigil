@@ -321,7 +321,9 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
 
 ### Mohamed Reda Daghouj (mdaghouj): Developer
 - **What he built:** most of the frontend: the application structure and routing, auth and setup pages, the Overview dashboard and PDF report, the Logs and Alerts pages, the alert drawer and notification bell, the settings pages, the design system, the PWA, the legal pages, and testing in Firefox and Safari.
-- **Challenges:** TODO (for example keeping live charts smooth while data streams in, and one shared color system across all pages).
+- **Challenges:**
+  - **Duplicate requests:** a single page load could send the same API request five times. Each re-render gave `apiFetch` a new function reference, which re-ran every `useEffect` that depended on it. He stabilized `apiFetch` with `useCallback`, and later moved data fetching to TanStack Query.
+  - **Parallel token refresh:** when the access token expired, several requests on the same page could get a 401 at once and each try to refresh it. The first refresh rotated the refresh token, so the next attempt reused the old one, triggered the backend's reuse protection and logged the user out. He added `refreshOnce`: all those requests wait for a single refresh, then retry with the new access token.
 
 ### Mohamed El Amrani (moel-amr): Technical Lead / Architect, Developer
 - **As Technical Lead:** defined the service architecture and the contracts between services, made the backend technology choices, and reviewed critical changes.
