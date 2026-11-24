@@ -67,6 +67,7 @@ interface ExporterSettings {
   endpoint: string;
   ingestionKey: string;
   language: ServiceLanguage | '';
+  legacyPythonSdk: boolean;
   existing: boolean;
   localTls: boolean;
   privateCaMount: boolean;
@@ -109,6 +110,8 @@ export function exporterConfig(
     env.OTEL_TRACES_EXPORTER = 'otlp';
     env.OTEL_METRICS_EXPORTER = 'otlp';
     env.OTEL_LOGS_EXPORTER = 'otlp';
+    if (language === 'python' && settings.legacyPythonSdk)
+      env.OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED = 'true';
     if (language === 'java')
       env.JAVA_TOOL_OPTIONS = '-javaagent:"' + agentPath + '"';
     if (language === 'node')

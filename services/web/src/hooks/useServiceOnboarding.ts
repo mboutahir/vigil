@@ -28,6 +28,7 @@ export default function useServiceOnboarding(apiFetch: ApiFetch) {
   const [format, updateFormat] = useState<ExporterFormat>('compose');
   const [existing, setExisting] = useState(false);
   const [language, setLanguage] = useState<ServiceLanguage | ''>('');
+  const [legacyPythonSdk, setLegacyPythonSdk] = useState(false);
   const [privateCaMount, setPrivateCaMount] = useState(false);
   const [caPath, setCaPath] = useState('/etc/vigil/vigil-ca.crt');
   const [agentPath, setAgentPath] = useState(
@@ -106,6 +107,8 @@ export default function useServiceOnboarding(apiFetch: ApiFetch) {
     setExisting,
     language,
     setLanguage,
+    legacyPythonSdk,
+    setLegacyPythonSdk,
     caPath,
     setCaPath,
     agentPath,

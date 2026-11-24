@@ -5,6 +5,7 @@ import {
   type RuntimeGuide,
 } from '../../../data/serviceOnboarding';
 import CodeSnippet from './CodeSnippet';
+import ServiceEnvironmentPicker from './ServiceEnvironmentPicker';
 import StepShell from './StepShell';
 
 const inputStyle =
@@ -27,6 +28,10 @@ export default function InstallStep({ flow }: Data) {
   return (
     <StepShell title="Install OpenTelemetry">
       <div className="space-y-4 text-sm">
+        <ServiceEnvironmentPicker
+          format={flow.format}
+          setFormat={flow.setFormat}
+        />
         <label className="mt-2 block text-[13px] text-vigil-muted">
           Service language
           <select
@@ -65,6 +70,16 @@ export default function InstallStep({ flow }: Data) {
             )}
             {compose && dockerfile && (
               <CodeSnippet label="Dockerfile" code={dockerfile} />
+            )}
+            {language === 'python' && (
+              <label className="mt-2 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={flow.legacyPythonSdk}
+                  onChange={(e) => flow.setLegacyPythonSdk(e.target.checked)}
+                />
+                My service uses opentelemetry-sdk earlier than 1.40.0
+              </label>
             )}
             {language === 'java' && (
               <label className="mt-2 block">
