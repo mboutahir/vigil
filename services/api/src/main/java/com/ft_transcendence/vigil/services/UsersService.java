@@ -11,6 +11,7 @@ import com.ft_transcendence.vigil.mappers.UsersGetResponseMapper;
 import com.ft_transcendence.vigil.repositories.UsersAuth.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -68,6 +69,10 @@ public class UsersService {
     }
     @Transactional
     public UsersGetAndPostResponseDto usersPatchIdService(UUID id, UsersPatchIdDto usersPatchIdDto) {
+        UserPrincipal adminUserPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User userAdmin = adminUserPrincipal.getUser();
+        if (id.equals(userAdmin.getId()) && usersPatchIdDto.getRole().equals(Role.VIEWER))
+            throw new ForbiddenException("you cannot demote yourself");
         User user = userRepository.findById(id).orElseThrow(()->new ResourcesNotFoundException("user not found"));
         // in case user added same email and wanted to change the password
         if (usersPatchIdDto.getEmail() != null && !usersPatchIdDto.getEmail().equals(user.getEmail()))
