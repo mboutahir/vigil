@@ -108,7 +108,7 @@ Data is kept in Docker volumes. `docker compose down -v` deletes all data **and*
 | Mohammed Boutahir | mboutahi | Project Manager, Developer | Organizes meetings and planning, tracks progress and deadlines, keeps the team in sync and handles blockers. LLM microservice (Python, FastAPI, Ollama): prompts, context selection, streaming, error handling, rate limiting. Traces and Metrics pages in the frontend. |
 | Mohamed Reda Daghouj | mdaghouj | Developer | Frontend (`services/web`): application structure, Overview dashboard, Logs and Alerts pages, design system, PWA, legal pages. |
 | Mohamed El Amrani | moel-amr | Technical Lead / Architect, Developer | Defines the architecture and technology choices, reviews critical changes and keeps code quality consistent. Backend API (`services/api`): authentication, users and roles, alert rules and evaluation, WebSocket and SSE, telemetry endpoints, LLM client. |
-| Ismail El Moufid | isel-mou | Product Owner, Developer | Defines the product vision, maintains and prioritizes the backlog, validates finished work and presents the product to evaluators. Infrastructure: Docker Compose, Caddy and TLS control, telemetry collector and its custom exporter, full-stack tests. |
+| Ismail El Moufid | isel-mou | Product Owner, Developer | Defines the product vision, maintains and prioritizes the backlog, validates finished work and presents the product to evaluators. Infrastructure: Docker Compose, Caddy and TLS control, telemetry collector and its custom exporter. |
 | Jihad Hamdaoui | jhamdaou | Developer | Cybersecurity: WAF (nginx + ModSecurity + OWASP CRS) and HashiCorp Vault secret management. |
 
 Required roles: **Product Owner:** Ismail El Moufid. **Project Manager / Scrum Master:** Mohammed Boutahir. **Technical Lead / Architect:** Mohamed El Amrani. All five members are **Developers**: they write, test, review and document their own features.
@@ -185,7 +185,7 @@ Two restricted ClickHouse accounts enforce least privilege: `vigil_writer` (the 
 | First-admin setup and login | Setup page creates the first admin; email + password login, BCrypt hashes, 15-minute JWT access token, rotating refresh token in an httpOnly cookie | El Amrani (API), Reda (UI) |
 | Users and roles | Admin creates, edits and deletes users with role admin or viewer; the last admin can't be removed or demoted; views and actions depend on the role | El Amrani, Reda |
 | Account settings and sessions | Change email or password; list active sessions with device info and revoke them | El Amrani, Reda |
-| Service onboarding wizard | Per-language OpenTelemetry instructions, ingestion key, TLS address and CA download, live verification of the first telemetry | Reda, Ismail (TLS), El Amrani |
+| Service onboarding wizard | Per-language OpenTelemetry instructions, ingestion key, CA certificate download, live verification of the first telemetry | Reda, Ismail (TLS), El Amrani |
 | Telemetry ingestion | OTLP/HTTP with bearer-token authentication, memory limiting, batching, deduplication, storage confirmation and callback to the API | Ismail |
 | Logs page | Live stream, full-text search, severity filter, sorting, pagination, CSV export | Reda, El Amrani |
 | Metrics page | Per-metric charts, filters, time series endpoint, live updates, CSV export | Mohammed, El Amrani |
@@ -198,7 +198,7 @@ Two restricted ClickHouse accounts enforce least privilege: `vigil_writer` (the 
 | Ask AI | Follow-up questions about an alert, streamed, with conversation history and per-user rate limiting | Mohammed, El Amrani, Reda (UI) |
 | Webhooks | Forward alerts to external URLs | El Amrani, Reda |
 | HTTPS and TLS management | Caddy with a local certificate authority for `localhost`, `vigil.localhost` and `host.docker.internal` | Ismail |
-| WAF | ModSecurity + OWASP CRS at paranoia level 2 in front of the API | Jihad |
+| WAF | ModSecurity + OWASP CRS at paranoia level 1 in front of the API | Jihad |
 | Secret management | Vault initialization, AppRole agents rendering each service's secrets | Jihad |
 | PWA | Web manifest, service worker, offline page, installable | Reda |
 | Legal pages | Privacy Policy and Terms of Service | Reda |
@@ -263,7 +263,7 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
 
 ### 9. WAF/ModSecurity + HashiCorp Vault (Major)
 - **Why:** the API is exposed to the internet and handles credentials.
-- **How:** nginx with ModSecurity v3 and OWASP CRS 4 in blocking mode, paranoia level 2, inbound anomaly threshold 5, with narrow exclusions for false positives. Vault is initialized and unsealed automatically, imports the initial secrets, and AppRole agents render each service's secrets (database passwords, JWT secret, ingestion key) into volumes only that service mounts.
+- **How:** nginx with ModSecurity v3 and OWASP CRS 4 in blocking mode, paranoia level 1, inbound anomaly threshold 5, with narrow exclusions for false positives. Vault is initialized and unsealed automatically, imports the initial secrets, and AppRole agents render each service's secrets (database passwords, JWT secret, ingestion key) into volumes only that service mounts.
 
 ### 10. Backend as microservices (Major)
 - **Why:** each part has a different job, language and scaling profile.
@@ -281,7 +281,7 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
 - **Why we chose it:** Vigil needs to receive telemetry from any application in any language. Writing our own ingestion API would force every user to write Vigil-specific code. OpenTelemetry is the standard, but the stock OpenTelemetry Collector can only store data. It cannot tell Vigil that new data has arrived so alert rules run immediately.
 - **What we built:** a custom collector distribution, compiled with the OpenTelemetry Collector Builder so it contains only the components we use: an OTLP receiver, the memory limiter and batch processors, and bearer-token authentication. It also contains our own exporter written in Go (`services/telemetry-collector/buildtime/exporter`). For every batch, the exporter:
   1. Maps OTLP logs, metrics (gauges, sums, histograms) and spans to our ClickHouse schema.
-  2. Removes duplicates within a 10-minute window, so retried batches from the SDK aren't stored twice. Concurrent batches are handled safely with reservations.
+  2. Removes duplicates within a 10-minute window, so retried batches from the SDK aren't stored twice. Concurrent batches are handled safely with one delivery lock per exporter.
   3. Inserts the rows with the restricted `vigil_writer` account.
   4. Confirms the rows are visible in ClickHouse before going on, so alert evaluation never runs on data that isn't readable yet.
   5. Calls the API's internal callback with each service's latest timestamp, retrying with backoff. The API then evaluates rules and resets silence timers.
@@ -333,7 +333,6 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
   - The Docker Compose deployment.
   - Caddy, with HTTPS from its own local certificate authority.
   - The custom telemetry collector and its exporter.
-  - The full-stack test suite.
 - **Challenges:** no existing OpenTelemetry Collector exporter could notify the API once incoming telemetry was confirmed as stored, so alerts risked being evaluated before the data was readable. He solved it with a custom exporter that:
   1. tags each batch with a notification ID and writes it to ClickHouse
   2. reads it back by that ID to confirm every row is visible
@@ -362,6 +361,6 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
 The team used AI assistants as helpers for four tasks. Every result was reviewed, tested and understood by the member who owns that part before it was merged.
 
 - **Explaining unfamiliar tools and libraries:** the tools that were new to the team, such as the OpenTelemetry Collector, ModSecurity with the OWASP Core Rule Set, HashiCorp Vault and ClickHouse.
-- **Writing tests:** test scripts and test scenarios, for example the WAF and security tests and the end-to-end checks of the running stack.
+- **Writing tests:** test scripts and test scenarios, for example the exporter's Go tests and the collector integration test.
 - **Drafting this README:** drafted by AI from our own notes and code, then reviewed by the team.
 - **Drafting the architecture:** helped sketch the first architecture: how the services split, how they talk to each other, and the path telemetry takes from the collector to the alerts. The team then made the final choices.
