@@ -1,6 +1,16 @@
 {
 	admin localhost:2019
 	default_sni localhost
+	log default {
+		format filter {
+			wrap json
+			fields {
+				request>uri query {
+					delete token
+				}
+			}
+		}
+	}
 }
 
 (vigil-routes) {

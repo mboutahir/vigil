@@ -19,6 +19,10 @@ import sys
 import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlencode, urlsplit
+
+
+SSE_TOKEN = "synthetic-sse-token"
 
 
 class Backend(BaseHTTPRequestHandler):
@@ -48,7 +52,7 @@ class Backend(BaseHTTPRequestHandler):
             self.wfile.write(bytes([0x81, len(data)]) + data)
             self.wfile.flush()
             self.close_connection = True
-        elif self.path.endswith("/live") or self.path.endswith("/ask"):
+        elif urlsplit(self.path).path.endswith(("/live", "/ask")):
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
             self.send_header("Connection", "close")
@@ -175,6 +179,32 @@ def client_tests():
         body=json.dumps({"question": "Explain the query", "extra": sql_example}),
         headers={"Content-Type": "application/json"}))
 
+    access_line = '127.0.0.1 - - "GET /work HTTP/1.1" 200 -'
+    java_trace = "java.lang.RuntimeException: checkout failed\n at com.shop.Checkout.pay(Checkout.java:42)"
+    for message in ("timeout after 5000 ms", access_line):
+        check("log search accepts " + message, lambda m=message: status(
+            "reverse-proxy", "/api/telemetry/logs?" + urlencode({"search": m}), 200))
+    check("log search exception stays on the search field", lambda: status(
+        "reverse-proxy", "/api/telemetry/logs?" + urlencode({"service": "timeout after 5000 ms"}), 403))
+
+    def protobuf_field(number, payload):
+        # Every fixture field fits in one length byte.
+        assert len(payload) < 128
+        return bytes([(number << 3) | 2, len(payload)]) + payload
+
+    def otlp_log(message):
+        # ExportLogsServiceRequest → ResourceLogs → ScopeLogs → LogRecord → AnyValue.
+        payload = message.encode()
+        for field in (1, 5, 2, 2, 1):
+            payload = protobuf_field(field, payload)
+        actual, body = request("reverse-proxy", "/otlp/v1/logs", method="POST",
+                               body=payload, headers={"Content-Type": "application/x-protobuf"})
+        assert actual == 200, actual
+        assert json.loads(body)["path"] == "/v1/logs"
+
+    check("OTLP Protobuf accepts an access line", lambda: otlp_log(access_line))
+    check("OTLP Protobuf accepts a Java stack trace", lambda: otlp_log(java_trace))
+
     def forwarded():
         own_ip = socket.gethostbyname(socket.gethostname())
         actual, body = request("reverse-proxy", "/api/echo?limit=10", headers={
@@ -228,6 +258,8 @@ def client_tests():
     def sse(path, method):
         conn = connection("reverse-proxy")
         start = time.monotonic()
+        if method == "GET":
+            path += "?" + urlencode({"token": SSE_TOKEN})
         conn.request(method, path, body='{"question":"Explain this alert"}' if method == "POST" else None,
                      headers={"Accept": "text/event-stream", "Content-Type": "application/json",
                               "User-Agent": "vigil-security-test"})
@@ -263,9 +295,13 @@ def isolated():
     def run(role, image_name, *args):
         container = name + "-" + role
         containers.append(container)
+        command = {
+            "api": ["python3", "/fixture.py", "backend", "8080"],
+            "telemetry-collector": ["python3", "/fixture.py", "backend", "4318"],
+        }.get(role, [])
         docker("run", "--detach", "--name", container, "--network", name,
                "--network-alias", role, *args, image_name,
-               *(["python3", "/fixture.py", "backend"] if role == "api" else []),
+               *command,
                stdout=subprocess.DEVNULL)
         return container
 
@@ -274,14 +310,16 @@ def isolated():
         docker("build", "--tag", image, str(root / "security/waf"))
         docker("network", "create", name, stdout=subprocess.DEVNULL)
         run("api", python_image, "--mount", mount)
+        run("telemetry-collector", python_image, "--mount", mount)
         waf = run("waf", image, "--env", "BACKEND=http://api:8080",
                   "--env", "BLOCKING_PARANOIA=1", "--env", "ANOMALY_INBOUND=5",
                   "--env", "ALLOWED_METHODS=GET HEAD POST OPTIONS PUT PATCH DELETE",
+                  "--env", "ALLOWED_REQUEST_CONTENT_TYPE=|application/json| |application/x-protobuf|",
                   "--env", "MODSEC_RESP_BODY_ACCESS=Off", "--env", "MODSEC_AUDIT_LOG_PARTS=AHZ",
                   "--env", "MODSEC_REQ_BODY_NOFILES_LIMIT=13107200",
                   "--env", "NGINX_WORKER_PROCESSES=1",
                   "--env", "NGINX_X_FORWARDED_PROTO=https", "--env", "NGINX_X_FORWARDED_PORT=443")
-        run("reverse-proxy", caddy_image, "--tmpfs", "/data", "--tmpfs", "/config",
+        caddy = run("reverse-proxy", caddy_image, "--tmpfs", "/data", "--tmpfs", "/config",
             "--mount", "type=bind,src=" + str(root / "services/reverse-proxy/Caddyfile") +
             ",dst=/etc/caddy/Caddyfile,readonly")
         for _ in range(60):
@@ -311,6 +349,19 @@ def isolated():
             client_ips.extend(line.split(": ", 1)[1] for line in logs.stdout.splitlines()
                               if line.startswith("Verified client IP: "))
         assert len(client_ips) == 2 and len(set(client_ips)) == 2, client_ips
+        for proxy in (waf, caddy):
+            logs = docker("logs", proxy, capture_output=True, text=True)
+            assert SSE_TOKEN not in logs.stdout and SSE_TOKEN not in logs.stderr, f"SSE token was logged by {proxy}"
+        print("PASS: telemetry SSE token absent from proxy logs")
+        docker("stop", "--time", "2", waf, stdout=subprocess.DEVNULL)
+        error_probe = docker("exec", caddy, "sh", "-c",
+                             'wget --no-check-certificate -q -O /dev/null "$1" 2>&1 || true',
+                             "sh", f"https://localhost/api/telemetry/logs/live?token={SSE_TOKEN}",
+                             capture_output=True, text=True)
+        assert "502" in error_probe.stdout, "Caddy did not report the unavailable upstream"
+        logs = docker("logs", caddy, capture_output=True, text=True)
+        assert SSE_TOKEN not in logs.stdout and SSE_TOKEN not in logs.stderr, "Caddy logged the SSE token on error"
+        print("PASS: telemetry SSE token absent from Caddy upstream errors")
         print("PASS: isolated forwarding/security checks (not application auth/rate-limit tests)")
     except Exception:
         for container in containers:
@@ -335,7 +386,7 @@ def isolated():
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "backend":
-        ThreadingHTTPServer(("0.0.0.0", 8080), Backend).serve_forever()
+        ThreadingHTTPServer(("0.0.0.0", int(sys.argv[2])), Backend).serve_forever()
     elif len(sys.argv) > 1 and sys.argv[1] == "client":
         client_tests()
     else:

@@ -27,8 +27,13 @@ server {
         add_header Content-Disposition 'attachment; filename="vigil-ca.crt"' always;
         add_header Cache-Control no-store always;
     }
-    # Buffering is disabled for every API response, including telemetry GET SSE
-    # and POST /api/alerts/{id}/ask; no endpoint-specific bypass of ModSecurity.
+    # EventSource sends its JWT in the query string.
+    location ~ ^/api/telemetry/(?:logs|metrics|traces)/live$ {
+        access_log off;
+        client_max_body_size 13m;
+        include includes/proxy_backend.conf;
+    }
+    # Buffering is disabled for all API responses, including Ask AI streams.
     location /api/ {
         client_max_body_size 13m;
         include includes/proxy_backend.conf;
