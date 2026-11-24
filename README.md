@@ -336,7 +336,10 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
   - The custom telemetry collector and its exporter.
   - The mock telemetry sender.
   - The full-stack test suite.
-- **Challenges:** TODO (for example reliable delivery and deduplication between the collector, ClickHouse and the API).
+- **Challenges:** no existing OpenTelemetry Collector exporter could notify the API once incoming telemetry was confirmed as stored, so alerts risked being evaluated before the data was readable. He solved it with a custom exporter that:
+  1. tags each batch with a notification ID and writes it to ClickHouse
+  2. reads it back by that ID to confirm every row is visible
+  3. only then sends the API a minimal notification summarizing what was saved: the signal, the services and their latest timestamps
 
 ### Jihad Hamdaoui (jhamdaou): Developer
 - **What he built:** the WAF (nginx, ModSecurity and OWASP CRS configuration and exclusion rules) and the Vault setup: automatic initialization and unsealing, policies, AppRole agents and secret delivery to each service.
