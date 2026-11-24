@@ -90,14 +90,8 @@ Without this step Chrome shows a certificate warning and the service worker cann
 
 1. Open `https://localhost:8443`.
 2. The first visit opens **Setup**: create the first account, which becomes the administrator.
-3. Go to **Add service** and follow the wizard to connect a service.
-4. To get demo data without your own service, start the bundled mock sender:
-
-```sh
-docker compose --profile mock-telemetry-sender up -d mock-telemetry-sender
-```
-
-5. In **Alert rules**, create a rule, for example service `checkout-api`, signal `logs`, metric `total_count`, window `300` s, threshold `1`. Within seconds an alert appears, and the AI analysis follows a few seconds later.
+3. Go to **Add service** and follow the wizard to connect a service. Its logs, traces and metrics appear within seconds.
+4. In **Alert rules**, create a rule for that service, for example signal `logs`, metric `total_count`, window `300` s, threshold `1`. Within seconds an alert appears, and the AI analysis follows a few seconds later.
 
 ### Stop
 
@@ -114,7 +108,7 @@ Data is kept in Docker volumes. `docker compose down -v` deletes all data **and*
 | Mohammed Boutahir | mboutahi | Project Manager, Developer | Organizes meetings and planning, tracks progress and deadlines, keeps the team in sync and handles blockers. LLM microservice (Python, FastAPI, Ollama): prompts, context selection, streaming, error handling, rate limiting. Traces and Metrics pages in the frontend. |
 | Mohamed Reda Daghouj | mdaghouj | Developer | Frontend (`services/web`): application structure, Overview dashboard, Logs and Alerts pages, design system, PWA, legal pages. |
 | Mohamed El Amrani | moel-amr | Technical Lead / Architect, Developer | Defines the architecture and technology choices, reviews critical changes and keeps code quality consistent. Backend API (`services/api`): authentication, users and roles, alert rules and evaluation, WebSocket and SSE, telemetry endpoints, LLM client. |
-| Ismail El Moufid | isel-mou | Product Owner, Developer | Defines the product vision, maintains and prioritizes the backlog, validates finished work and presents the product to evaluators. Infrastructure: Docker Compose, Caddy and TLS control, telemetry collector and its custom exporter, mock sender, full-stack tests. |
+| Ismail El Moufid | isel-mou | Product Owner, Developer | Defines the product vision, maintains and prioritizes the backlog, validates finished work and presents the product to evaluators. Infrastructure: Docker Compose, Caddy and TLS control, telemetry collector and its custom exporter, full-stack tests. |
 | Jihad Hamdaoui | jhamdaou | Developer | Cybersecurity: WAF (nginx + ModSecurity + OWASP CRS) and HashiCorp Vault secret management. |
 
 Required roles: **Product Owner:** Ismail El Moufid. **Project Manager / Scrum Master:** Mohammed Boutahir. **Technical Lead / Architect:** Mohamed El Amrani. All five members are **Developers**: they write, test, review and document their own features.
@@ -339,7 +333,6 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
   - The Docker Compose deployment.
   - Caddy, with HTTPS from its own local certificate authority.
   - The custom telemetry collector and its exporter.
-  - The mock telemetry sender.
   - The full-stack test suite.
 - **Challenges:** no existing OpenTelemetry Collector exporter could notify the API once incoming telemetry was confirmed as stored, so alerts risked being evaluated before the data was readable. He solved it with a custom exporter that:
   1. tags each batch with a notification ID and writes it to ClickHouse

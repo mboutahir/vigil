@@ -189,25 +189,6 @@ services:
     command: [/vigcol, --config, /run/secrets/collector-config.yaml]
     volumes:
       - vault_collector_secrets:/run/secrets:ro
-  mock-telemetry-sender:
-    container_name: vigil-mock-telemetry-sender
-    profiles: ["mock-telemetry-sender"]
-    build:
-      context: ./services/mock-telemetry-sender
-    network_mode: host
-    environment:
-      OTEL_SERVICE_NAME: "checkout-api"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "https://localhost/otlp"
-      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
-      OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Bearer%20configure-a-real-ingestion-key-for-testing"
-      OTEL_EXPORTER_OTLP_CERTIFICATE: "/etc/vigil/ca/root.crt"
-      OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "true"
-      SEND_INTERVAL_SECONDS: "${MOCK_TELEMETRY_INTERVAL_SECONDS:-5}"
-    volumes:
-      # Development convenience only: real producers obtain the public CA separately.
-      - caddy_public_ca:/etc/vigil/ca:ro
-    restart: unless-stopped
-
   waf:
     build:
       context: ./security/waf

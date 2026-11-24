@@ -12,7 +12,6 @@ This module provides Web Application Firewall (WAF) protection and centralized s
 flowchart TD
     Browser[Browser]
     Producers[Instrumented services]
-    Mock["mock-telemetry-sender / optional profile"]
 
     subgraph Application[Compose default network]
         Caddy[reverse-proxy / Caddy] -->|Static files and SPA routes| Frontend[Frontend / served inside Caddy]
@@ -32,11 +31,10 @@ flowchart TD
 
     Browser -->|HTTPS| Caddy
     Producers -->|HTTPS OTLP| Caddy
-    Mock -->|HTTPS OTLP| Caddy
     API -->|Outbound alert delivery| Webhooks[Configured webhook destinations]
 ```
 
-Caddy is the only published ingress. Frontend assets are built into its image, not served by a separate frontend container. API and OTLP traffic pass through the WAF. Nginx strips the `/otlp` prefix before proxying to the collector, which authenticates requests using a bearer token. The optional mock sender runs on the host network and uses the same HTTPS ingress as real producers. The callback URL must target `http://api:8081/internal/alerts/trigger-evaluation`. Solid arrows show runtime requests or data access; dashed arrows show one-shot provisioning.
+Caddy is the only published ingress. Frontend assets are built into its image, not served by a separate frontend container. API and OTLP traffic pass through the WAF. Nginx strips the `/otlp` prefix before proxying to the collector, which authenticates requests using a bearer token. The callback URL must target `http://api:8081/internal/alerts/trigger-evaluation`. Solid arrows show runtime requests or data access; dashed arrows show one-shot provisioning.
 
 **Secret management:**
 
