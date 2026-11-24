@@ -328,7 +328,10 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
 ### Mohamed El Amrani (moel-amr): Technical Lead / Architect, Developer
 - **As Technical Lead:** defined the service architecture and the contracts between services, made the backend technology choices, and reviewed critical changes.
 - **What he built:** the Spring Boot API: authentication with JWT and refresh tokens, sessions, users and roles, alert rules and their evaluation in ClickHouse, silence detection, alert history with acknowledgment, WebSocket and SSE, webhooks, telemetry query endpoints, and the client that calls the LLM service and re-streams its answers.
-- **Challenges:** TODO (for example two users acknowledging the same alert at once, solved with optimistic locking, and re-streaming the LLM's SSE to the browser).
+- **Challenges:** two users could acknowledge or resolve the same alert at the same moment, and the second write would silently overwrite the first. He solved it with optimistic locking:
+  1. each alert row carries a `@Version` number that JPA checks and increments on every update
+  2. when two updates start from the same version, only the first is saved
+  3. the second gets **409 Conflict** ("resource is being used by another user"), and the change that won is pushed live to every connected user over the WebSocket
 
 ### Ismail El Moufid (isel-mou): Product Owner, Developer
 - **As Product Owner:** defined the product vision, prioritized features, and validated finished work.
