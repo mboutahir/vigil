@@ -71,7 +71,7 @@ public class UsersService {
     public UsersGetAndPostResponseDto usersPatchIdService(UUID id, UsersPatchIdDto usersPatchIdDto) {
         UserPrincipal adminUserPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User userAdmin = adminUserPrincipal.getUser();
-        if (id.equals(userAdmin.getId()) && usersPatchIdDto.getRole().equals(Role.VIEWER))
+        if (id.equals(userAdmin.getId()) && usersPatchIdDto.getRole() != null && usersPatchIdDto.getRole().equals(Role.VIEWER))
             throw new ForbiddenException("you cannot demote yourself");
         User user = userRepository.findById(id).orElseThrow(()->new ResourcesNotFoundException("user not found"));
         // in case user added same email and wanted to change the password
