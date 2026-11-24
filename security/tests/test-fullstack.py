@@ -471,7 +471,7 @@ class Stack:
 
     def auth(self):
         self.email = "fixture-admin@example.test"
-        self.password = "FixturePass42!<script>test</script>' OR '1'='1"
+        self.password = "VigilFixture9!Blue-Quartz"
         self.sensitive.append(self.password)
         body = {"email": self.email, "password": self.password}
         result, headers = self.http.request("/api/setup", "POST", body, auth=False, expected=201)
@@ -774,7 +774,7 @@ def main():
             return 0
         stack.check("all real services/init/health, CA-verified HTTPS", stack.startup, fatal=True)
         stack.check("built frontend asset and SPA fallback (not browser automation)", stack.frontend)
-        stack.check("setup/login opaque password, JWT/cookies/refresh, Vault/generated ApiKey", stack.auth, fatal=True)
+        stack.check("setup/login, JWT/cookies/refresh, Vault/generated ApiKey", stack.auth, fatal=True)
         stack.check("WAF attacks, protected API and unauthenticated OTLP", stack.waf)
         stack.check("authenticated real WebSocket and three live SSE subscriptions", stack.subscribe, fatal=True)
         stack.check("real OTLP, ClickHouse reads, three public SSE streams and series", stack.ingest, fatal=True)

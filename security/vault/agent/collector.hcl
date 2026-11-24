@@ -1,4 +1,3 @@
-pid_file = "/tmp/vault-agent.pid"
 vault { address = "http://vault:8200" }
 auto_auth {
   method "approle" {
@@ -11,14 +10,6 @@ auto_auth {
   }
 }
 template_config { static_secret_render_interval = "5m" }
-template {
-  contents = <<EOT
-{{ with secret "secret/data/ft_transcendence/collector" }}{{ .Data.data.CLICKHOUSE_PASSWORD }}{{ end }}
-EOT
-  destination = "/run/secrets/CLICKHOUSE_PASSWORD"
-  perms = "0444"
-  error_on_missing_key = true
-}
 template {
   contents = <<EOT
 {{ with secret "secret/data/ft_transcendence/collector" }}{{ .Data.data.VIGIL_INGESTION_KEY }}{{ end }}

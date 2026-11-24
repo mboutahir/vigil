@@ -80,11 +80,13 @@ Applications do not connect to Vault's network: role-specific volumes bridge sec
 ### Web Application Firewall
 
 - Nginx with ModSecurity and OWASP Core Rule Set (CRS).
-- Protects `/api/*` traffic.
+- Protects `/api/*` and `/otlp/*` traffic.
 - Operates behind the existing Caddy reverse proxy.
-- Uses blocking paranoia level 2 and an inbound anomaly threshold of 5.
+- Uses blocking paranoia level 1 and an inbound anomaly threshold of 5.
 - Supports API methods including PUT/PATCH/DELETE, WebSocket upgrades, and unbuffered SSE.
-- Limits credential-password and TLS-address JSON exceptions to the relevant fields and routes; other inputs remain inspected.
+- Uses CRS method and content-type allowlists. Protobuf is allowed for OTLP exporters, and the content-type allowlist applies across the WAF.
+- Skips CRS rules 930120 and 932160 only for the JSON password field on POST /api/auth/login to avoid a reproduced false positive.
+- Allows SQL, HTML, and shell examples in Ask AI text by skipping SQL injection, cross-site scripting, and command injection checks on the expected JSON fields of `POST /api/alerts/{id}/ask`. Requests with query arguments or other fields receive the regular checks.
 
 ### HashiCorp Vault
 

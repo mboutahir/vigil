@@ -1,8 +1,15 @@
 #!/bin/sh
 set -eu
 
-test -n "${CLICKHOUSE_WRITER_PASSWORD}"
-test -n "${CLICKHOUSE_API_PASSWORD:?Set CLICKHOUSE_API_PASSWORD}"
+# The collector integration stack supplies test credentials directly.
+if [ -n "${CLICKHOUSE_SECRETS_DIR:-}" ]; then
+  CLICKHOUSE_ADMIN_PASSWORD="$(cat "$CLICKHOUSE_SECRETS_DIR/CLICKHOUSE_PASSWORD")"
+  CLICKHOUSE_API_PASSWORD="$(cat "$CLICKHOUSE_SECRETS_DIR/CLICKHOUSE_API_PASSWORD")"
+  CLICKHOUSE_WRITER_PASSWORD="$(cat "$CLICKHOUSE_SECRETS_DIR/CLICKHOUSE_WRITER_PASSWORD")"
+fi
+: "${CLICKHOUSE_ADMIN_PASSWORD:?Missing ClickHouse admin password}"
+: "${CLICKHOUSE_API_PASSWORD:?Missing ClickHouse API password}"
+: "${CLICKHOUSE_WRITER_PASSWORD:?Missing ClickHouse writer password}"
 
 case "${CLICKHOUSE_DB}" in
   *[!A-Za-z0-9_]*) echo "CLICKHOUSE_DB contains unsupported characters" >&2; exit 1 ;;

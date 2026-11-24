@@ -1,4 +1,3 @@
-pid_file = "/tmp/vault-agent.pid"
 vault { address = "http://vault:8200" }
 auto_auth {
   method "approle" {

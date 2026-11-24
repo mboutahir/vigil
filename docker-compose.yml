@@ -143,13 +143,13 @@ services:
       CLICKHOUSE_USER: "${CLICKHOUSE_USER:?Set CLICKHOUSE_USER in .env}"
       CLICKHOUSE_DB: "${CLICKHOUSE_DB:-default}"
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+      CLICKHOUSE_PASSWORD_FILE: /run/secrets/CLICKHOUSE_PASSWORD
     healthcheck:
       test: [CMD-SHELL, "/security-entrypoint/clickhouse-health.sh"]
       interval: 10s
       timeout: 5s
       retries: 12
 
-    entrypoint: [/bin/sh, /security-entrypoint/clickhouse-start.sh]
     depends_on:
       vault-agent-clickhouse: {condition: service_healthy}
   clickhouse-init:
@@ -158,14 +158,14 @@ services:
     environment:
       CLICKHOUSE_ADMIN_USER: "${CLICKHOUSE_USER:?Set CLICKHOUSE_USER in .env}"
       CLICKHOUSE_DB: "${CLICKHOUSE_DB:-default}"
+      CLICKHOUSE_SECRETS_DIR: /run/secrets
     volumes:
       - ./services/telemetry-db/clickhouse-init.sh:/clickhouse-init.sh:ro
       - vault_clickhouse_secrets:/run/secrets:ro
-      - ./security/vault/scripts:/security-entrypoint:ro
     depends_on:
       clickhouse:
         condition: service_healthy
-    entrypoint: [/bin/sh, /security-entrypoint/clickhouse-init.sh]
+    entrypoint: [/bin/sh, /clickhouse-init.sh]
 
   telemetry-collector:
     container_name: vigil-telemetry-collector
@@ -218,23 +218,17 @@ services:
       timeout: 3s
       retries: 5
     environment:
-      PORT: "8080"
-      SERVER_NAME: localhost
       BACKEND: http://api:8080
-      SERVER_TOKENS: "off"
       SERVER_HEADER: ""
-      MODSEC_RULE_ENGINE: "On"
-      MODSEC_REQ_BODY_ACCESS: "On"
-      MODSEC_REQ_BODY_LIMIT: "13107200"
+      BLOCKING_PARANOIA: "1"
+      ALLOWED_METHODS: "GET HEAD POST OPTIONS PUT PATCH DELETE"
+      ALLOWED_REQUEST_CONTENT_TYPE: >-
+        |application/x-www-form-urlencoded| |multipart/form-data| |multipart/related|
+        |text/xml| |application/xml| |application/soap+xml| |application/json|
+        |application/cloudevents+json| |application/cloudevents-batch+json| |application/x-protobuf|
       MODSEC_REQ_BODY_NOFILES_LIMIT: "13107200"
-      MODSEC_REQ_BODY_LIMIT_ACTION: "Reject"
       MODSEC_RESP_BODY_ACCESS: "Off"
-      MODSEC_AUDIT_ENGINE: "RelevantOnly"
-      MODSEC_AUDIT_LOG_FORMAT: "JSON"
-      MODSEC_AUDIT_LOG_PARTS: "AFHZ"
-      BLOCKING_PARANOIA: "2"
-      ANOMALY_INBOUND: "5"
-      ANOMALY_OUTBOUND: "4"
+      MODSEC_AUDIT_LOG_PARTS: "AHZ"
       NGINX_X_FORWARDED_PROTO: https
       NGINX_X_FORWARDED_PORT: "443"
     volumes:
@@ -244,7 +238,7 @@ services:
         condition: service_started
     networks: [default]
   vault:
-    image: hashicorp/vault:1.17
+    image: hashicorp/vault:2.2.2
     restart: unless-stopped
     environment:
       SKIP_SETCAP: "true"
@@ -254,7 +248,7 @@ services:
       - ./security/vault/config:/vault/config:ro
     networks: [vault_internal]
   vault-init:
-    image: hashicorp/vault:1.17
+    image: hashicorp/vault:2.2.2
     restart: unless-stopped
     user: "0:0"
     entrypoint: [/bin/sh, /vault/scripts/init-vault.sh]
@@ -277,7 +271,7 @@ services:
       timeout: 5s
       retries: 40
   vault-agent-api:
-    image: hashicorp/vault:1.17
+    image: hashicorp/vault:2.2.2
     restart: unless-stopped
     user: "0:0"
     entrypoint: [/bin/sh, /vault/scripts/start-agent.sh]
@@ -298,7 +292,7 @@ services:
       retries: 40
 
   vault-agent-postgres:
-    image: hashicorp/vault:1.17
+    image: hashicorp/vault:2.2.2
     restart: unless-stopped
     user: "0:0"
     entrypoint: [/bin/sh, /vault/scripts/start-agent.sh]
@@ -318,7 +312,7 @@ services:
       retries: 40
 
   vault-agent-clickhouse:
-    image: hashicorp/vault:1.17
+    image: hashicorp/vault:2.2.2
     restart: unless-stopped
     user: "0:0"
     entrypoint: [/bin/sh, /vault/scripts/start-agent.sh]
@@ -339,7 +333,7 @@ services:
       retries: 40
 
   vault-agent-collector:
-    image: hashicorp/vault:1.17
+    image: hashicorp/vault:2.2.2
     restart: unless-stopped
     user: "0:0"
     entrypoint: [/bin/sh, /vault/scripts/start-agent.sh]

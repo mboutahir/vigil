@@ -69,7 +69,7 @@ Coverage includes:
 
 - Service readiness and one-shot provisioning exit codes.
 - CA-verified HTTPS, built frontend assets, and SPA fallback.
-- Setup with a complex legitimate password, login, cookies, refresh, sessions,
+- Setup with an ordinary complex password, login, cookies, refresh, sessions,
   admin ApiKey authentication, and matching API/Vault ingestion keys.
 - WAF blocking, protected-route denial, and unauthenticated OTLP denial.
 - Real OTLP logs/metrics/traces, database reads, WebSocket delivery, and SSE.

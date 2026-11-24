@@ -138,17 +138,18 @@ def client_tests():
     check("CRS rejects unsupported methods", lambda: status(
         "reverse-proxy", "/api/alerts", 403, method="PROPFIND"))
 
-    # Passwords are opaque, not SQL/HTML; exercise valid complex credentials.
     for path, method in (("/api/auth/login", "POST"), ("/api/setup", "POST"),
                          ("/api/users", "POST"), ("/api/users/me", "PATCH")):
-        for password in ("ValidPass1!", "Correct1!<script>alert(1)</script>",
-                         "Correct1!' OR '1'='1", "Correct1!/etc/passwd"):
-            body = json.dumps({"email": "test@example.org", "password": password,
-                               **({"role": "viewer"} if path == "/api/users" else {})})
-            check(method + " " + path + " opaque password " + repr(password),
-                  lambda p=path, m=method, b=body: status(
-                      "reverse-proxy", p, 200, method=m, body=b,
-                      headers={"Content-Type": "application/json"}))
+        body = json.dumps({"email": "test@example.org", "password": "ValidPass1!",
+                           **({"role": "viewer"} if path == "/api/users" else {})})
+        check(method + " " + path + " normal credentials",
+              lambda p=path, m=method, b=body: status(
+                  "reverse-proxy", p, 200, method=m, body=b,
+                  headers={"Content-Type": "application/json"}))
+    check("login password containing a literal file path reaches the backend", lambda: status(
+        "reverse-proxy", "/api/auth/login", 200, method="POST",
+        body=json.dumps({"email": "test@example.org", "password": "Correct1!/etc/passwd"}),
+        headers={"Content-Type": "application/json"}))
 
     for path in ("/api/config/keys", "/api/auth/sessions", "/api/alerts/rules",
                  "/api/webhooks", "/api/telemetry/logs?service=checkout-api"):
@@ -161,6 +162,18 @@ def client_tests():
         check("still inspects " + path, lambda p=path, b=body: status(
             "reverse-proxy", p, 403, method="POST", body=json.dumps(b),
             headers={"Content-Type": "application/json"}))
+
+    ask_path = "/api/alerts/12345678-1234-1234-1234-123456789abc/ask"
+    sql_example = "`SELECT DISTINCT order_id FROM traces`"
+    check("Ask AI accepts a SQL example in history", lambda: status(
+        "reverse-proxy", ask_path, 200, method="POST",
+        body=json.dumps({"question": "Explain the query", "history": [
+            {"question": "List unique orders", "answer": sql_example}
+        ]}), headers={"Content-Type": "application/json"}))
+    check("Ask AI still inspects unexpected fields", lambda: status(
+        "reverse-proxy", ask_path, 403, method="POST",
+        body=json.dumps({"question": "Explain the query", "extra": sql_example}),
+        headers={"Content-Type": "application/json"}))
 
     def forwarded():
         own_ip = socket.gethostbyname(socket.gethostname())
@@ -262,8 +275,9 @@ def isolated():
         docker("network", "create", name, stdout=subprocess.DEVNULL)
         run("api", python_image, "--mount", mount)
         waf = run("waf", image, "--env", "BACKEND=http://api:8080",
-                  "--env", "BLOCKING_PARANOIA=2", "--env", "ANOMALY_INBOUND=5",
-                  "--env", "MODSEC_RESP_BODY_ACCESS=Off", "--env", "MODSEC_AUDIT_LOG_PARTS=AFHZ",
+                  "--env", "BLOCKING_PARANOIA=1", "--env", "ANOMALY_INBOUND=5",
+                  "--env", "ALLOWED_METHODS=GET HEAD POST OPTIONS PUT PATCH DELETE",
+                  "--env", "MODSEC_RESP_BODY_ACCESS=Off", "--env", "MODSEC_AUDIT_LOG_PARTS=AHZ",
                   "--env", "MODSEC_REQ_BODY_NOFILES_LIMIT=13107200",
                   "--env", "NGINX_WORKER_PROCESSES=1",
                   "--env", "NGINX_X_FORWARDED_PROTO=https", "--env", "NGINX_X_FORWARDED_PORT=443")
