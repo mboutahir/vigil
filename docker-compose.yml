@@ -72,6 +72,7 @@ services:
 
   api:
     container_name: vigil-api
+    restart: unless-stopped
     build:
       context: ./services/api
     environment:
@@ -110,6 +111,7 @@ services:
       vault-agent-api: {condition: service_healthy}
   postgres:
     container_name: vigil-postgres
+    restart: unless-stopped
     image: "${POSTGRES_IMAGE}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -134,6 +136,7 @@ services:
       vault-agent-postgres: {condition: service_healthy}
   clickhouse:
     container_name: vigil-clickhouse
+    restart: unless-stopped
     image: "clickhouse/clickhouse-server:26.8.6.5"
     volumes:
       - clickhouse_data:/var/lib/clickhouse
