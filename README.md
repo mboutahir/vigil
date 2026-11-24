@@ -366,8 +366,9 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
 - Docker Compose: https://docs.docker.com/compose/
 
 ### How AI was used
-AI assistants were used as helpers. Every change was reviewed, tested and understood by the member who owns that part before it was merged.
+The team used AI assistants as helpers for four tasks. Every result was reviewed, tested and understood by the member who owns that part before it was merged.
 
-- **LLM service (Mohammed):** Claude was used to iterate on and test the prompts for the small local model, to review the streaming and error-handling code, and to debug WAF false positives on Ask AI requests.
-- **Other members:** TODO, each member: which tool, for which tasks, in which part (for example generating boilerplate, explaining unfamiliar libraries, drafting the legal pages, debugging configuration).
-- **Documentation:** this README was drafted with AI help from our own notes and code, then reviewed by the team.
+- **Explaining unfamiliar tools and libraries:** the tools that were new to the team, such as the OpenTelemetry Collector, ModSecurity with the OWASP Core Rule Set, HashiCorp Vault and ClickHouse.
+- **Writing tests:** test scripts and test scenarios, for example the WAF and security tests and the end-to-end checks of the running stack.
+- **Drafting this README:** drafted by AI from our own notes and code, then reviewed by the team.
+- **Drafting the architecture:** helped sketch the first architecture: how the services split, how they talk to each other, and the path telemetry takes from the collector to the alerts. The team then made the final choices.
