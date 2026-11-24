@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Severity } from '../../api/alertRulesApi';
+import { formatTime, timeAgo } from '../shared/utils/format';
 import LogsDetails from './LogsDetails';
 import { borderColor, severityColors } from './colorsGuid';
 
@@ -8,7 +9,7 @@ export type LogsSeverity = Severity | 'error';
 export type Attributes = Record<string, string>;
 
 interface Data {
-  time: string;
+  timestamp: string;
   service: string;
   severity: LogsSeverity;
   message: string;
@@ -17,7 +18,7 @@ interface Data {
 }
 
 export default function LogsRow({
-  time,
+  timestamp,
   service,
   severity,
   message,
@@ -34,9 +35,10 @@ export default function LogsRow({
         onClick={() => setIsOpen((prev) => !prev)}
       >
         <td
+          title={formatTime(timestamp)}
           className={`text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3 border-l ${borderColor[severity]}`}
         >
-          {time}
+          {timeAgo(timestamp)}
         </td>
         <td className="text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3">
           {service}

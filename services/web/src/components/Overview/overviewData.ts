@@ -207,15 +207,6 @@ export function bucketSpans(
   }));
 }
 
-// 15:04:05, with the date in front when it isn't today
-export function formatLogTime(iso: string) {
-  const date = new Date(iso);
-  const time = date.toLocaleTimeString([], { hour12: false });
-  return Date.now() - date.getTime() > DAY
-    ? `${date.getMonth() + 1}/${date.getDate()} ${time}`
-    : time;
-}
-
 export function formatRate(rate: number | null) {
   if (rate === null) return '—';
   return `${rate >= 10 ? Math.round(rate) : rate.toFixed(rate >= 1 ? 1 : 2)}/min`;

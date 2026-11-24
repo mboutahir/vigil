@@ -1,14 +1,15 @@
 import type { Log } from '../../../api/logsApi';
-import { OTHER_CLASS, SEVERITY_CLASS, formatLogTime } from '../overviewData';
+import { formatTime, timeAgo } from '../../shared/utils/format';
+import { OTHER_CLASS, SEVERITY_CLASS } from '../overviewData';
 
 export default function LogsPreviewRow({ log }: { log: Log }) {
   return (
     <div className="flex items-center border-b border-b-vigil-border px-3 sm:px-5 py-3 mono hover:bg-vigil-preview-hover transition-[background-color] duration-300">
       <div
-        className="shrink-0 text-[11px] me-4 text-vigil-muted-extra"
-        title={new Date(log.timestamp).toLocaleString()}
+        className="w-18 shrink-0 whitespace-nowrap text-[11px] me-4 text-vigil-muted-extra"
+        title={formatTime(log.timestamp)}
       >
-        {formatLogTime(log.timestamp)}
+        {timeAgo(log.timestamp)}
       </div>
       <div className="flex items-center min-w-0">
         <div

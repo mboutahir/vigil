@@ -79,16 +79,6 @@ export default function LogsPage() {
     warning: 0,
   };
 
-  const formatDate = (timestamp: string) =>
-    new Date(timestamp).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    });
-
   const getLogFingerprint = (log: Log) => {
     return JSON.stringify([
       log.service,
@@ -288,7 +278,7 @@ export default function LogsPage() {
                 return (
                   <LogsRow
                     key={key}
-                    time={formatDate(log.timestamp)}
+                    timestamp={log.timestamp}
                     service={log.service}
                     severity={log.severity as LogsSeverity}
                     message={log.message}
