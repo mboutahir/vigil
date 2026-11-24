@@ -42,7 +42,6 @@ public class MetricsRepository {
 				toStartOfInterval(timestamp, toIntervalSecond(%1$d)) AS bucket,
 				any(unit) AS series_unit,
 				any(if(metric_type = 'sum' AND is_monotonic, 'counter', 'gauge')) AS series_kind,
-				any(attributes['internal'] = 'true') AS series_internal,
 				avg(value) AS bucket_value
 			FROM metrics
 			%2$s
@@ -59,12 +58,11 @@ public class MetricsRepository {
 	public List<Metric> findMetrics(
 			String service,
 			String period,
-			Boolean internalOnly,
 			Instant before,
 			int limit) {
 
 		// for the next page we only get points older than the before time
-		return filtered(service, period, internalOnly)
+		return filtered(service, period)
 				.before(before)
 				.orderBy("timestamp DESC")
 				.limit(limit)
@@ -75,17 +73,16 @@ public class MetricsRepository {
 	public void streamAllMetrics(
 			String service,
 			String period,
-			Boolean internalOnly,
 			Consumer<Metric> consumer) {
 
-		filtered(service, period, internalOnly)
+		filtered(service, period)
 				.orderBy("timestamp DESC")
 				.stream(jdbcTemplate, this::mapMetric, consumer, "metrics");
 	}
 
 	// for alert analysis we read points between these times, oldest first
 	public List<Metric> findMetrics(String service, Instant from, Instant to) {
-		return filtered(service, null, null)
+		return filtered(service, null)
 				.between(from, to)
 				.orderBy("timestamp ASC")
 				.list(jdbcTemplate, this::mapMetric, "metrics");
@@ -111,22 +108,10 @@ public class MetricsRepository {
 		}
 	}
 
-	private ClickHouseQuery filtered(String service, String period, Boolean internalOnly) {
-		ClickHouseQuery query = ClickHouseQuery.from(SELECT)
+	private ClickHouseQuery filtered(String service, String period) {
+		return ClickHouseQuery.from(SELECT)
 				.eq("service", service)
 				.since(period);
-
-		if (internalOnly != null)
-			query.where(internalFilter(internalOnly));
-
-		return query;
-	}
-
-	// false also takes points that have no internal key
-	private static String internalFilter(boolean internalOnly) {
-		return internalOnly
-				? "attributes['internal'] = 'true'"
-				: "(attributes['internal'] = 'false' OR NOT mapContains(attributes, 'internal'))";
 	}
 
 	private Metric mapMetric(ResultSet result, int rowNum) throws SQLException {
@@ -139,12 +124,12 @@ public class MetricsRepository {
 	}
 
 	public List<MetricSeries> findSeries(
-			String period, String service, Boolean internalOnly, int intervalSeconds) {
+			String period, String service, int intervalSeconds) {
 
 		if (period == null || period.isBlank())
 			throw new IllegalArgumentException("period must be one of 1h, 24h, 7d, 30d");
 
-		ClickHouseQuery filters = filtered(service, period, internalOnly)
+		ClickHouseQuery filters = filtered(service, period)
 				.where("metric_type IN ('gauge', 'sum')");
 		String sql = SERIES_SQL.formatted(intervalSeconds, filters.whereClause());
 		record SeriesKey(String name, String service) {}
@@ -157,7 +142,7 @@ public class MetricsRepository {
 				if (chart == null) {
 					chart = new MetricSeries(key.name(), key.service(),
 							rs.getString("series_unit"), rs.getString("series_kind"),
-							rs.getBoolean("series_internal"), new ArrayList<>());
+							new ArrayList<>());
 					series.put(key, chart);
 				}
 
