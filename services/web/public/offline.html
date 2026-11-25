@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#050910" />
+    <meta name="theme-color" content="#0b0c0f" />
     <meta name="color-scheme" content="dark" />
     <title>Vigil - Offline</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -48,17 +48,10 @@
         border-bottom: 1px solid var(--vigil-border);
       }
       .logo {
-        display: inline-block;
-        padding: 4px 18px;
-        background: var(--vigil-accent);
-        color: var(--vigil-surface);
-        font-family: 'Poppins', system-ui, sans-serif;
-        font-weight: 600;
-        font-size: 24px;
-        line-height: 1.333333;
-        letter-spacing: 0.025em;
-        text-transform: uppercase;
-        transform: rotate(-3deg) skewX(10deg);
+        display: block;
+        height: 32px;
+        width: auto;
+        margin: 4px auto;
       }
 
       main {
@@ -78,8 +71,9 @@
         margin-bottom: 20px;
         padding: 6px 10px;
         border: 1px solid var(--vigil-chart-error);
+        border-radius: var(--vigil-radius-badge);
         font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-        font-size: 11px;
+        font-size: 12px;
         letter-spacing: 0.1em;
         text-transform: uppercase;
         color: var(--vigil-chart-error);
@@ -88,7 +82,7 @@
         margin-bottom: 12px;
         font-family: 'Poppins', system-ui, sans-serif;
         font-weight: 600;
-        font-size: clamp(28px, 6vw, 40px);
+        font-size: clamp(26px, 5vw, 32px);
         letter-spacing: 0.025em;
       }
       p.msg {
@@ -108,7 +102,7 @@
         color: var(--vigil-on-accent);
         background: var(--vigil-accent);
         border: 0;
-        border-radius: 0;
+        border-radius: var(--vigil-radius-control);
         cursor: pointer;
         transition: opacity 0.2s;
       }
@@ -137,7 +131,7 @@
     </style>
   </head>
   <body class="watermark">
-    <header><span class="logo">VIGIL</span></header>
+    <header><img class="logo" src="/vigil-logo.svg" width="384" height="120" alt="Vigil" /></header>
 
     <main role="alert">
       <div class="status">Connection lost</div>

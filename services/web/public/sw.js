@@ -1,4 +1,5 @@
-const CACHE_NAME = 'vigil-offline-v8';
+const CACHE_NAME = 'vigil-offline-v20-type';
+const LOGO_URL = '/vigil-logo.svg';
 const ICON_URL = '/favicon.svg';
 const OFFLINE_URL = '/offline.html';
 const FONT_URL = '/fonts/poppins-semibold.ttf';
@@ -9,7 +10,7 @@ self.addEventListener('install', (event) => {
     caches
       .open(CACHE_NAME)
       .then((cache) =>
-        cache.addAll([OFFLINE_URL, FONT_URL, COLORS_URL, ICON_URL]),
+        cache.addAll([OFFLINE_URL, FONT_URL, COLORS_URL, ICON_URL, LOGO_URL]),
       )
       .then(() => self.skipWaiting()),
   );
@@ -25,11 +26,12 @@ self.addEventListener('fetch', (event) => {
     url.origin === self.location.origin &&
     (url.pathname === ICON_URL || url.pathname === '/favicon.ico');
 
-  if (isIcon) {
+  const isLogo = url.origin === self.location.origin && url.pathname === LOGO_URL;
+  if (isIcon || isLogo) {
     event.respondWith(
       caches
         .open(CACHE_NAME)
-        .then((cache) => cache.match(ICON_URL))
+        .then((cache) => cache.match(isLogo ? LOGO_URL : ICON_URL))
         .then((response) => response || fetch(event.request)),
     );
     return;
