@@ -1,7 +1,7 @@
 from datetime import datetime
 from app.config import settings
 from app.schemas import AlertsContext, LogRow, MetricsRow, TracesRow
-#turn thousends of metrics logs and traces into one compacted str with the most useful ones
+#turn thousands of metrics logs and traces into one compact str with the most useful ones
 SEVERITY_LEVELS = {
     "critical" :0,
     "fatal" : 0,
@@ -15,7 +15,7 @@ SEVERITY_LEVELS = {
 
 MAX_MESSAGE_CHARS = 160
 
-#we trip and lower case severity and return it if not found we return 3 as info
+#we strip and lower case severity and return its level, if not found we return 3 as info
 def _severity_level(severity: str) -> int:
     return SEVERITY_LEVELS.get(severity.strip().lower(), 3)
 
@@ -35,7 +35,7 @@ def select_logs(logs: list[LogRow], alert_time: datetime) -> list[LogRow]:
         key= lambda row: (_severity_level(row.severity), _distance(row.timestamp, alert_time)),
     )
     keep = rank[: settings.max_context_logs]
-    #we sort by creticallity first then we sort by timing because we want chrononical order of the errors 
+    #we sort by criticality first then we sort by timing because we want chronological order of the errors
     return sorted(keep, key= lambda row: row.timestamp)
 #errors first, then slowest
 def select_traces(traces: list[TracesRow]) -> list[TracesRow]:
@@ -63,9 +63,9 @@ def select_traces(traces: list[TracesRow]) -> list[TracesRow]:
 # row = disk_io 8 (25s away)
 #   best.get("disk_io") → None, different key
 #   → best = {"cpu_usage": 23, "disk_io": 8}
-def select_metrics(Metrics: list[MetricsRow], alert_time: datetime) -> list[MetricsRow]:
+def select_metrics(metrics: list[MetricsRow], alert_time: datetime) -> list[MetricsRow]:
     best: dict[str, MetricsRow] = {}
-    for row in Metrics :
+    for row in metrics:
         current = best.get(row.name)
         # keep the point closest to the alert time (before or after) for each metric name
         if current is None or _distance(current.timestamp, alert_time) > _distance(row.timestamp, alert_time):

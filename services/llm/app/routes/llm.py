@@ -20,7 +20,7 @@ UNAVAILABLE = "Analysis unavailable"
 
 #our user limiter
 ask_limiter = FixedWindowLimiter(settings.llm_ask_limit, settings.llm_ask_window_seconds)
-#ollma limiter
+#ollama limiter
 ollama_limiter = ConcurrencyLimiter(settings.llm_max_concurrent, settings.llm_queue_wait_seconds)
 
 
@@ -41,17 +41,17 @@ async def _formatter(tokens: AsyncIterator[str], first: str, slot: Slot) -> Asyn
         await tokens.aclose()
         slot.release()
 
-#testing ollma working by getting the first word
+#testing ollama is working by getting the first word
 async def _stream(messages: list[dict[str, str]]):
     slot = await ollama_limiter.acquire()
     if slot is None:
-        #if slots are busing we wait abit before saying its busy
+        #if all slots are busy we wait a bit before saying it's busy
         wait = max(1, round(ollama_limiter.wait_seconds))
         return JSONResponse(status_code=503, content={"message": f"llm busy; retry in {wait} seconds"})
 
     tokens = stream_chat(messages)
     try:
-        #get the nexxt word
+        #get the next word
         first = await anext(tokens)
     except (OllamaException, StopAsyncIteration):
         logger.exception("ollama unavailable")
@@ -63,7 +63,7 @@ async def _stream(messages: list[dict[str, str]]):
         _formatter(tokens, first, slot),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache"},
-        #fastapi func that execute after program finish (safty net)
+        #fastapi func that executes after the response finishes (safety net)
         background=BackgroundTask(slot.release),
     )
 
@@ -76,7 +76,7 @@ async def forward(req: ForwardRequest):
 
 
 @router.post("/internal/llm/ask")
-#x_vigil_user_id the user id get send in header we specifiy to fastapi to get this from the header not the body
+#x_vigil_user_id the user id is sent in a header, we tell fastapi to read it from the header not the body
 async def ask(req: AskRequest, x_vigil_user_id: str = Header(min_length=1, max_length=64)):
     retry = ask_limiter.try_acquire(x_vigil_user_id)
     if retry:

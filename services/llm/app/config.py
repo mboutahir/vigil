@@ -1,4 +1,4 @@
-#importing env variables, converting them to their actual data tyle
+#importing env variables, converting them to their actual data type
 #file purpose turn environment variables (always strings) into a typed, immutable settings object that every other file imports.
 #BaseModel: declare fields with types, and you get a constructor that converts and validates. BaseSettings: the same, but the values come from env vars.
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -8,14 +8,14 @@ class Settings(BaseSettings):
         env_file = ".env",
         env_file_encoding = "utf-8",
         extra = "ignore",
-       #the pydantic model is mutable u can by mistake re assing an env variable losing the enissial config that why we make it impossible here
+        #a pydantic model is mutable, so code could reassign a setting by mistake and lose the initial config; frozen makes that impossible
         frozen=True,
     )
-    #the values are only incase and env var is empty our BaseSettings class we inheret from fills these variables already from the env
+    #these values are only used when an env var is missing; BaseSettings, which we inherit from, fills the fields from the env
     ollama_host: str = "http://localhost:11434"
     ollama_model: str = "qwen2.5:0.5b"
     #How much text the model can read at once (question + answer together)
-    ollama_num_ctx: int = 4000
+    ollama_num_ctx: int = 4096
     #Max length of the answer
     ollama_num_predict: int = 200
     #How “creative” the model is. Low = sticks to facts, high = makes stuff up
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     max_context_traces: int = 10
     #max Ask AI questions per user
     llm_ask_limit: int = 5
-    #per second
+    #length of that window in seconds
     llm_ask_window_seconds: int = 60
     #how many answers Ollama generates at the same time
     llm_max_concurrent: int = 1
@@ -40,5 +40,3 @@ class Settings(BaseSettings):
     llm_queue_wait_seconds: float = 0.5
 
 settings = Settings()
-
-

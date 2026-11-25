@@ -48,8 +48,8 @@ def _rule_line(rule: AlertRule | None) -> str:
         return "rule: unknown"
     if rule.threshold is None:
         return "rule: the service went silent (no telemetry before the timeout)"
-     # how many values in the window become one number: avg, max, min, sum, count, latest, p95
-     #threshold = the limit the value reached
+    # how many values in the window become one number: avg, max, min, sum, count, latest, p95
+    #threshold = the limit the value reached
     what = rule.aggregation or "value"
     if rule.metric_name:
         what = f"{what}({rule.metric_name})"

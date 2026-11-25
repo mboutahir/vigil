@@ -28,7 +28,7 @@ class FixedWindowLimiter:
         if window.count < self.limit:
             window.count += 1
             return 0
-        # wait until the window ends how much time left till he can ask again at atleast 1 sec
+        # wait until the window ends: how much time is left until they can ask again, at least 1 sec
         return max(1, math.ceil(self.window_seconds - (now - window.started_at)))
     
 #asyncio.Semaphore(N) is a counter with a waiting line that lets at most N asyncio tasks

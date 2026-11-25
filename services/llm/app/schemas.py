@@ -1,11 +1,11 @@
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 from uuid import UUID
-#java sends JSON text FastAPI parses it into a dict pydantic checks and converts the dict into these class, and only if that works does the endpoint code run.
-#basemodel is a class we inhernt from for validation we dont use constructor and we specify the fields that we are filling in the class
+#java sends JSON text FastAPI parses it into a dict pydantic checks and converts the dict into these classes, and only if that works does the endpoint code run.
+#basemodel is a class we inherit from for validation we dont use a constructor and we specify the fields that we are filling in the class
 
 class TelemetryRow(BaseModel):
-    #model_config just to specify base model without it we use a defaut with it we can specify that extra fields that we didnt expect to be ignored
+    #model_config just to configure the base model: without it we get the default, with it we can say that extra fields we didnt expect are ignored
     model_config = ConfigDict(extra = "ignore")
 
 class LogRow(TelemetryRow):
@@ -13,8 +13,8 @@ class LogRow(TelemetryRow):
     timestamp: datetime
     severity: str
     message: str
-    #field a way to attach more rules to the field for example message: str = field(min_length = 1) the string show have a minimum of 1 length
-    #we use default_factory = disct so that for each instance we get an u seperate dict
+    #Field is a way to attach more rules to the field for example message: str = Field(min_length = 1) the string should have a minimum length of 1
+    #we use default_factory = dict so that each instance gets its own separate dict
     attributes: dict[str, str] = Field(default_factory=dict)
 
 class MetricsRow(TelemetryRow):
