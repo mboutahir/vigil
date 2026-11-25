@@ -291,7 +291,7 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
   - Matching OpenTelemetry's metric types to a flat table.
   - Building a minimal, non-root collector image.
 - **Value to the project:** zero-code onboarding for any OpenTelemetry-instrumented service, near-instant alerting, and no duplicate alerts.
-- **Why it deserves Major status:** it is a separate service written in a different language that extends a large external framework through its plugin API. It has its own tests (`*_test.go`, plus an integration test with a mock backend), and the whole alerting pipeline depends on it.
+- **Why it deserves Major status:** it is a separate service written in a different language that extends a large external framework through its plugin API, and the whole alerting pipeline depends on it.
 
 ### 13. Support for additional browsers (Minor)
 - **Why:** an on-call engineer opens the dashboard in whatever browser they already use.
@@ -360,9 +360,8 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
 - Docker Compose: https://docs.docker.com/compose/
 
 ### How AI was used
-The team used AI assistants as helpers for four tasks. Every result was reviewed, tested and understood by the member who owns that part before it was merged.
+The team used AI assistants as helpers for three tasks. Every result was reviewed, tested and understood by the member who owns that part before it was merged.
 
 - **Explaining unfamiliar tools and libraries:** the tools that were new to the team, such as the OpenTelemetry Collector, ModSecurity with the OWASP Core Rule Set, HashiCorp Vault and ClickHouse.
-- **Writing tests:** test scripts and test scenarios, for example the exporter's Go tests and the collector integration test.
 - **Drafting this README:** drafted by AI from our own notes and code, then reviewed by the team.
 - **Drafting the architecture:** helped sketch the first architecture: how the services split, how they talk to each other, and the path telemetry takes from the collector to the alerts. The team then made the final choices.
