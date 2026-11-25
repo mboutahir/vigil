@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     ollama_host: str = "http://localhost:11434"
     ollama_model: str = "qwen2.5:0.5b"
     #How much text the model can read at once (question + answer together)
-    ollama_num_ctx: int = 4096
+    ollama_num_ctx: int = 4000
     #Max length of the answer
     ollama_num_predict: int = 200
     #How “creative” the model is. Low = sticks to facts, high = makes stuff up
