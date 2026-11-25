@@ -90,7 +90,6 @@ public class AlertsService {
                         throw new InvalidRequestException("Aggregation is required for metrics");
                     if (!isValidAggregation.contains(aggregeration))
                         throw new InvalidRequestException("Invalid aggregation: " + aggregeration);
-                    // TODO: validate metricName against DB
                     break;
             }
         }
