@@ -116,7 +116,7 @@ Required roles: **Product Owner:** Ismail El Moufid. **Project Manager / Scrum M
 ## Project Management
 
 - **Work split:** the project was divided by service: frontend, backend API, LLM service, ingestion and infrastructure, security. Each member owns a service and its interface with the others. The interfaces (for example the JSON contract between the API and the LLM service) were agreed first so members could work in parallel.
-- **Git workflow:** one branch per feature or fix (`feat/...`, `fix/...`, `docs/...`), merged into `develop` through GitHub pull requests reviewed by another member. Commit messages follow the Conventional Commits style (`feat(llm): ...`, `fix(waf): ...`).
+- **Git workflow:** one branch per feature or fix (`feat/...`, `fix/...`, `docs/...`), merged into `develop` through GitHub pull requests reviewed by another member. Most commit messages follow the Conventional Commits style (`feat(llm): ...`, `fix(waf): ...`).
 - **Meetings:** a weekly meeting to review progress, update the task list, plan the next week's tasks and resolve blockers.
 - **Task tracking:** Discord, in a dedicated tasks channel. Each task was posted with its owner, its status moved through To do, In progress, Review and Done, and the list was reviewed at every meeting.
 - **Communication:** Discord, with a team server for daily messages, quick calls when integrating two services, and sharing pull request links for review.
@@ -162,7 +162,7 @@ Each class is a table, and each attribute is a column with its PostgreSQL type. 
 | `sessions` | `id` UUID PK, `user_agent`, `ip_address`, `last_used_at` timestamptz, `revoked` boolean | many-to-one `users` |
 | `refresh_tokens` | `id` UUID PK, `token_hash` unique, `issued_at`, `expires_at` timestamptz, `superseded`, `revoked` boolean | many-to-one `users`, many-to-one `sessions` |
 | `alert_rules` | `id` UUID PK, `service`, `signal_type` enum, `metric_name`, `aggregation`, `window_seconds` int, `threshold` double, `severity` enum, `enabled` boolean | has many `alert_history` |
-| `alert_history` | `id` UUID PK, `version` bigint (optimistic lock), `service`, `triggered_at` timestamptz, `metric_name`, `threshold` double (null for silence alerts), `severity`, `llm_analysis` text, `status` enum `sent`/`acknowledged`/`resolved`, `acked_at`/`acked_by`, `resolved_at`/`resolved_by` | many-to-one `alert_rules` (null for silence alerts), many-to-one `users` (the user who acknowledged it) |
+| `alert_history` | `id` UUID PK, `version` bigint (optimistic lock), `service`, `triggered_at` timestamptz, `signal_type` enum, `metric_name`, `aggregation`, `window_seconds` int, `threshold` double (null for silence alerts), `severity`, `llm_analysis` text, `status` enum `sent`/`acknowledged`/`resolved`, `acked_at`/`acked_by`, `resolved_at`/`resolved_by` | many-to-one `alert_rules` (null for silence alerts), many-to-one `users` (the user who acknowledged it) |
 | `alert_notification` | PK (`user_id`, `alert_history_id`), `seen` boolean, `seen_at` timestamptz | many-to-one `users`, many-to-one `alert_history`: the per-user read state of each alert |
 | `webhooks` | `id` UUID PK, `url` unique | none |
 
