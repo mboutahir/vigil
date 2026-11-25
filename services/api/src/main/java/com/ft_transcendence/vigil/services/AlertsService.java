@@ -320,7 +320,7 @@ public class AlertsService {
             alertHistory.setResolvedBy(user.getEmail());
             alertHistory.setStatus(status);
         }
-        alertHistoryRepository.save(alertHistory);
+        alertHistory = alertHistoryRepository.saveAndFlush(alertHistory);
         AlertHistoryPatchResponseDto responseDto = AlertHistoryPatchResponseDto.builder().
                 id(alertHistoryId).
                 rule(alertHistory.getRule()).
@@ -338,6 +338,7 @@ public class AlertsService {
                 resolvedAt(alertHistory.getResolvedAt()).
                 ackedBy(alertHistory.getAckedBy()).
                 resolvedBy(alertHistory.getResolvedBy()).
+                version(alertHistory.getVersion()).
                 build();
         registry.podcastAlert(WebSocketAlertHistoryResponse.builder()
                 .type(Type.alert)
@@ -347,7 +348,8 @@ public class AlertsService {
                         responseDto.getAckedAt(),
                         responseDto.getAckedBy(),
                         responseDto.getResolvedAt(),
-                        responseDto.getResolvedBy()))
+                        responseDto.getResolvedBy(),
+                        responseDto.getVersion()))
                 .build());
         return responseDto;
 

@@ -20,6 +20,7 @@ public class WebSocketAlertHistoryResponse {
             Instant ackedAt,
             String ackedBy,
             Instant resolvedAt,
-            String resolvedBy)
+            String resolvedBy,
+            Long version)
     {}
 }

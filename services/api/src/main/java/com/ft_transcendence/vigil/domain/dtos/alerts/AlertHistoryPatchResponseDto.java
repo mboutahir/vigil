@@ -31,4 +31,5 @@ public class AlertHistoryPatchResponseDto {
 
     private String ackedBy;
     private String resolvedBy;
+    private Long version;
 }
