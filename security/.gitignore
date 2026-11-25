@@ -1,6 +1,3 @@
 .env
 *.key
 *.pem
-vault-data/
-secrets/
-logs/

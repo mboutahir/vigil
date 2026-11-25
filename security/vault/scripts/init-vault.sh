@@ -54,13 +54,6 @@ if ! vault kv get secret/ft_transcendence/api >/dev/null 2>&1; then
   vault kv put secret/ft_transcendence/api JWT_SECRET="$JWT_SECRET" SPRING_DATASOURCE_PASSWORD="$POSTGRES_PASSWORD" CLICKHOUSE_PASSWORD="$CLICKHOUSE_API_PASSWORD" VIGIL_INGESTION_KEY="$VIGIL_INGESTION_KEY" >/dev/null
   unset JWT_SECRET POSTGRES_PASSWORD CLICKHOUSE_PASSWORD CLICKHOUSE_API_PASSWORD CLICKHOUSE_WRITER_PASSWORD VIGIL_INGESTION_KEY
 fi
-# Existing installations need the collector's key in the API configtree too.
-if ! vault kv get -field=VIGIL_INGESTION_KEY secret/ft_transcendence/api >/dev/null 2>&1; then
-  ingestion_key="$(vault kv get -field=VIGIL_INGESTION_KEY secret/ft_transcendence/collector)"
-  : "${ingestion_key:?Missing collector ingestion key}"
-  vault kv patch secret/ft_transcendence/api VIGIL_INGESTION_KEY="$ingestion_key" >/dev/null
-  unset ingestion_key
-fi
 vault auth list -format=json | grep -q '"approle/"' || vault auth enable approle >/dev/null
 for role in api postgres clickhouse collector; do
   vault policy write "${role}-read" "/vault/policies/${role}-policy.hcl" >/dev/null
