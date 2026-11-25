@@ -1,7 +1,6 @@
 #!/bin/sh
 set -eu
 
-# The collector integration stack supplies test credentials directly.
 if [ -n "${CLICKHOUSE_SECRETS_DIR:-}" ]; then
   CLICKHOUSE_ADMIN_PASSWORD="$(cat "$CLICKHOUSE_SECRETS_DIR/CLICKHOUSE_PASSWORD")"
   CLICKHOUSE_API_PASSWORD="$(cat "$CLICKHOUSE_SECRETS_DIR/CLICKHOUSE_API_PASSWORD")"

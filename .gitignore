@@ -79,7 +79,5 @@ dist-ssr/
 # === Markdown ===
 *.md
 !**/README.md
-!/services/api/DEVELOPMENT.md
-!/services/telemetry-collector/COLLECTOR.md
 
 notes.todo

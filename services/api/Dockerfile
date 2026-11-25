@@ -3,7 +3,7 @@ FROM maven:3.9.15-eclipse-temurin-21 AS builder
 WORKDIR /app
 COPY . .
 
-RUN mvn package -Dspring.datasource.url=jdbc:h2:mem:vigil -Dspring.datasource.username=sa -Dspring.datasource.password=sa
+RUN mvn package
 
 FROM gcr.io/distroless/java21-debian12 AS runtime
 
