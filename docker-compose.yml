@@ -141,7 +141,7 @@ services:
     volumes:
       - clickhouse_data:/var/lib/clickhouse
       - vault_clickhouse_secrets:/run/secrets:ro
-      - ./security/vault/scripts:/security-entrypoint:ro
+      - ./security/vault/scripts:/security-entrypoint:ro,z
     environment:
       CLICKHOUSE_USER: "${CLICKHOUSE_USER:?Set CLICKHOUSE_USER in .env}"
       CLICKHOUSE_DB: "${CLICKHOUSE_DB:-default}"
@@ -163,7 +163,7 @@ services:
       CLICKHOUSE_DB: "${CLICKHOUSE_DB:-default}"
       CLICKHOUSE_SECRETS_DIR: /run/secrets
     volumes:
-      - ./services/telemetry-db/clickhouse-init.sh:/clickhouse-init.sh:ro
+      - ./services/telemetry-db/clickhouse-init.sh:/clickhouse-init.sh:ro,Z
       - vault_clickhouse_secrets:/run/secrets:ro
     depends_on:
       clickhouse:
@@ -229,7 +229,7 @@ services:
     command: [server]
     volumes:
       - vault_data:/vault/file
-      - ./security/vault/config:/vault/config:ro
+      - ./security/vault/config:/vault/config:ro,Z
     networks: [vault_internal]
   vault-init:
     image: hashicorp/vault:2.2.2
@@ -239,9 +239,9 @@ services:
     environment:
       VAULT_ADDR: http://vault:8200
     volumes:
-      - ./security/vault/scripts:/vault/scripts:ro
-      - ./security/vault/policies:/vault/policies:ro
-      - ./.env:/vault/bootstrap/application.env:ro
+      - ./security/vault/scripts:/vault/scripts:ro,z
+      - ./security/vault/policies:/vault/policies:ro,Z
+      - ./.env:/vault/bootstrap/application.env:ro,Z
       - vault_init:/vault/init
       - vault_api_credentials:/vault/credentials/api
       - vault_postgres_credentials:/vault/credentials/postgres
@@ -264,8 +264,8 @@ services:
     networks: [vault_internal]
     environment: {VAULT_ROLE: api}
     volumes:
-      - ./security/vault/scripts:/vault/scripts:ro
-      - ./security/vault/agent:/vault/agent:ro
+      - ./security/vault/scripts:/vault/scripts:ro,z
+      - ./security/vault/agent:/vault/agent:ro,z
       - vault_api_secrets:/run/secrets
       - vault_api_credentials:/vault/credentials:ro
     healthcheck:
@@ -285,8 +285,8 @@ services:
     networks: [vault_internal]
     environment: {VAULT_ROLE: postgres}
     volumes:
-      - ./security/vault/scripts:/vault/scripts:ro
-      - ./security/vault/agent:/vault/agent:ro
+      - ./security/vault/scripts:/vault/scripts:ro,z
+      - ./security/vault/agent:/vault/agent:ro,z
       - vault_postgres_secrets:/run/secrets
       - vault_postgres_credentials:/vault/credentials:ro
     healthcheck:
@@ -305,8 +305,8 @@ services:
     networks: [vault_internal]
     environment: {VAULT_ROLE: clickhouse}
     volumes:
-      - ./security/vault/scripts:/vault/scripts:ro
-      - ./security/vault/agent:/vault/agent:ro
+      - ./security/vault/scripts:/vault/scripts:ro,z
+      - ./security/vault/agent:/vault/agent:ro,z
       - vault_clickhouse_secrets:/run/secrets
       - vault_clickhouse_credentials:/vault/credentials:ro
     healthcheck:
@@ -326,8 +326,8 @@ services:
     networks: [vault_internal]
     environment: {VAULT_ROLE: collector}
     volumes:
-      - ./security/vault/scripts:/vault/scripts:ro
-      - ./security/vault/agent:/vault/agent:ro
+      - ./security/vault/scripts:/vault/scripts:ro,z
+      - ./security/vault/agent:/vault/agent:ro,z
       - vault_collector_secrets:/run/secrets
       - vault_collector_credentials:/vault/credentials:ro
     healthcheck:
