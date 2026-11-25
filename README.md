@@ -340,7 +340,9 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
 
 ### Jihad Hamdaoui (jhamdaou): Developer
 - **What he built:** the WAF (nginx, ModSecurity and OWASP CRS configuration and exclusion rules) and the Vault setup: automatic initialization and unsealing, policies, AppRole agents and secret delivery to each service.
-- **Challenges:** TODO (for example removing CRS false positives on JSON and AI chat requests without weakening the rules, and delivering secrets to services that are not on Vault's network).
+- **Challenges:** CRS false positives affected valid login passwords and code snippets pasted into Ask AI. He solved it by adding two targeted exclusions in the [custom WAF rules](security/waf/rules/REQUEST-899-CUSTOM.conf):
+  1. On `POST /api/auth/login`, he excluded the JSON `password` field from the two checks that flagged file paths.
+  2. On Ask AI requests, he excluded the question and history from selected checks when the request was a JSON `POST` with no query arguments.
 
 ## Resources
 
