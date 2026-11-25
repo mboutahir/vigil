@@ -30,13 +30,3 @@ export interface AuthState {
 export interface RefreshResponse {
   access_token: string;
 }
-
-export interface AlertRulesCurrentUser {
-  id: string;
-  email: string;
-  role: Role;
-}
-
-export interface SetupStatusResponse {
-  setup_required: boolean;
-}
