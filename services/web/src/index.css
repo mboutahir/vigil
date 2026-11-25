@@ -205,19 +205,27 @@ input[type='submit']:disabled:hover {
 }
 
 .branding-panel .content .title {
-    @apply my-7 text-[28px] sm:text-[32px] lg:text-[36px] leading-[1.2];
+    @apply my-4 sm:my-7 text-[28px] sm:text-[32px] lg:text-[36px] leading-[1.2];
 }
 
 .branding-panel .content .caption {
     @apply w-full lg:w-87.5 text-vigil-muted mb-7 lg:mb-12 text-[17px] leading-[1.7];
 }
 
+.login .branding-panel .caption {
+    @apply hidden sm:block;
+}
+
 .branding-panel .content ul.features {
-    @apply uppercase text-vigil-muted flex flex-wrap justify-center lg:justify-start gap-x-4 gap-y-2 text-xs lg:text-[12px] tracking-[1px] mb-6 lg:mb-0;
+    @apply hidden sm:flex items-center justify-center lg:justify-start gap-3 uppercase text-vigil-muted text-[11px] tracking-wide mb-6 lg:mb-0;
+}
+
+.branding-panel .content ul.features li {
+    @apply whitespace-nowrap;
 }
 
 .branding-panel .content ul.features li .dot {
-    @apply inline-block w-2 h-2 rounded bg-vigil-accent me-0.75;
+    @apply inline-block size-1 rounded-full bg-vigil-accent align-middle;
 }
 
 .branding-panel .footer-text {

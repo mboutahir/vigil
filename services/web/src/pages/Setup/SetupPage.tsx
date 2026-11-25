@@ -8,7 +8,7 @@ export default function SetupPage() {
     <div className="setup bg-vigil-bg min-h-screen lg:h-screen">
       <div className="mx-auto grid grid-cols-12 h-full">
         <div className="branding-panel">
-          <Logo full className="mb-10" />
+          <Logo full className="mb-4 sm:mb-10" imageClassName="h-auto w-48 max-w-full sm:w-54" />
           <Branding
             tagline="system initialization"
             title={{
@@ -22,8 +22,8 @@ export default function SetupPage() {
               three: 'role-based access',
             }}
           />
-          <div className="flex items-center justify-between">
-            <div className="footer-text">
+          <div className="flex items-center justify-center gap-3 sm:justify-between">
+            <div className="footer-text hidden sm:block">
               vigil observability · secure access
             </div>
             <div className="footer-text">

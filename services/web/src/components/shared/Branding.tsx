@@ -14,7 +14,7 @@ interface Data {
 
 export default function Branding({ tagline, title, caption, features }: Data) {
   return (
-    <div className="content w-full max-w-135">
+    <div className="content w-full max-w-135 self-center lg:self-start">
       {tagline && <p className="tagline">{tagline}</p>}
       <h1 className="title">
         {title.white}
