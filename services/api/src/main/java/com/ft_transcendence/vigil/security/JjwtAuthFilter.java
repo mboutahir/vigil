@@ -20,10 +20,18 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.Set;
 
 @Component
 @Slf4j
 public class JjwtAuthFilter extends OncePerRequestFilter {
+    private static final Set<String> allowedPathsForQueryToken = Set.of(
+            "/api/alerts/ws",
+            "/api/telemetry/logs/live",
+            "/api/telemetry/metrics/live",
+            "/api/telemetry/traces/live"
+    );
+
     private final JjwtService jjwtService;
     private final UserDetailsServiceImpl userDetailsService;
     private final VigilProperties vigilProperties;
@@ -52,7 +60,8 @@ public class JjwtAuthFilter extends OncePerRequestFilter {
         if (header == null)
         {
             String requestToken = request.getParameter("token");
-            if (requestToken != null)
+            if (requestToken != null && "GET".equals(request.getMethod())
+                    && allowedPathsForQueryToken.contains(request.getServletPath()))
             {
                     String username = null;
                     try
