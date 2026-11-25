@@ -106,20 +106,20 @@ Data is kept in Docker volumes. `docker compose down -v` deletes all data **and*
 | Member | Login | Role(s) | Responsibilities |
 |---|---|---|---|
 | Mohammed Boutahir | mboutahi | Project Manager, Developer | Organizes meetings and planning, tracks progress and deadlines, keeps the team in sync and handles blockers. LLM microservice (Python, FastAPI, Ollama): prompts, context selection, streaming, error handling, rate limiting. Traces and Metrics pages in the frontend. |
-| Mohamed Reda Daghouj | mdaghouj | Developer | Frontend (`services/web`): application structure, Overview dashboard, Logs and Alerts pages, design system, PWA, legal pages. |
-| Mohamed El Amrani | moel-amr | Technical Lead / Architect, Developer | Defines the architecture and technology choices, reviews critical changes and keeps code quality consistent. Backend API (`services/api`): authentication, users and roles, alert rules and evaluation, WebSocket and SSE, telemetry endpoints, LLM client. |
-| Ismail El Moufid | isel-mou | Product Owner, Developer | Defines the product vision, maintains and prioritizes the backlog, validates finished work and presents the product to evaluators. Infrastructure: Docker Compose, Caddy and TLS control, telemetry collector and its custom exporter. |
+| Mohamed Reda Daghouj | mdaghouj | Product Owner, Developer | Defines the product vision, maintains and prioritizes the backlog, validates finished work and presents the product to evaluators. Frontend (`services/web`): application structure, Overview dashboard, Logs and Alerts pages, design system, PWA, legal pages. |
+| Mohamed El Amrani | moel-amr | Developer | Backend API (`services/api`): authentication, users and roles, alert rules and evaluation, WebSocket and SSE, telemetry endpoints, LLM client. |
+| Ismail El Moufid | isel-mou | Technical Lead / Architect, Developer | Defines the architecture and technology choices, reviews critical changes and keeps code quality consistent. Infrastructure: Docker Compose, Caddy and HTTPS, telemetry collector and its custom exporter. |
 | Jihad Hamdaoui | jhamdaou | Developer | Cybersecurity: WAF (nginx + ModSecurity + OWASP CRS) and HashiCorp Vault secret management. |
 
-Required roles: **Product Owner:** Ismail El Moufid. **Project Manager / Scrum Master:** Mohammed Boutahir. **Technical Lead / Architect:** Mohamed El Amrani. All five members are **Developers**: they write, test, review and document their own features.
+Required roles: **Product Owner:** Mohamed Reda Daghouj. **Project Manager / Scrum Master:** Mohammed Boutahir. **Technical Lead / Architect:** Ismail El Moufid. All five members are **Developers**: they write, test, review and document their own features.
 
 ## Project Management
 
 - **Work split:** the project was divided by service: frontend, backend API, LLM service, ingestion and infrastructure, security. Each member owns a service and its interface with the others. The interfaces (for example the JSON contract between the API and the LLM service) were agreed first so members could work in parallel.
-- **Git workflow:** one branch per feature or fix (`feat/...`, `fix/...`, `docs/...`), merged into `develop` through GitHub pull requests reviewed by another member. Most commit messages follow the Conventional Commits style (`feat(llm): ...`, `fix(waf): ...`).
+- **Git workflow:** one branch per feature or fix (`feat/...`, `fix/...`, `docs/...`), merged into `develop`, mostly through GitHub pull requests opened and merged by the owner of that part. Most commit messages follow the Conventional Commits style (`feat(llm): ...`, `fix(waf): ...`).
 - **Meetings:** a weekly meeting to review progress, update the task list, plan the next week's tasks and resolve blockers.
 - **Task tracking:** Discord, in a dedicated tasks channel. Each task was posted with its owner, its status moved through To do, In progress, Review and Done, and the list was reviewed at every meeting.
-- **Communication:** Discord, with a team server for daily messages, quick calls when integrating two services, and sharing pull request links for review.
+- **Communication:** Discord, with a team server for daily messages, quick calls when integrating two services, and sharing pull request links so the others knew what changed.
 
 ## Technical Stack
 
@@ -313,22 +313,22 @@ Total claimed: **21 points** (14 required, the rest counts as bonus).
   - Returning a real 503 instead of an empty 200 when the model is down: the service reads the first token before starting the response.
   - Keeping the whole answer within the API's 30-second timeout on a CPU.
 
-### Mohamed Reda Daghouj (mdaghouj): Developer
+### Mohamed Reda Daghouj (mdaghouj): Product Owner, Developer
+- **As Product Owner:** defined the product vision, prioritized features, and validated finished work.
 - **What he built:** most of the frontend: the application structure and routing, auth and setup pages, the Overview dashboard and PDF report, the Logs and Alerts pages, the alert drawer and notification bell, the settings pages, the design system, the PWA, the legal pages, and testing in Firefox and Safari.
 - **Challenges:**
   - **Duplicate requests:** a single page load could send the same API request five times. Each re-render gave `apiFetch` a new function reference, which re-ran every `useEffect` that depended on it. He stabilized `apiFetch` with `useCallback`, and later moved data fetching to TanStack Query.
   - **Parallel token refresh:** when the access token expired, several requests on the same page could get a 401 at once and each try to refresh it. The first refresh rotated the refresh token, so the next attempt reused the old one, triggered the backend's reuse protection and logged the user out. He added `refreshOnce`: all those requests wait for a single refresh, then retry with the new access token.
 
-### Mohamed El Amrani (moel-amr): Technical Lead / Architect, Developer
-- **As Technical Lead:** defined the service architecture and the contracts between services, made the backend technology choices, and reviewed critical changes.
+### Mohamed El Amrani (moel-amr): Developer
 - **What he built:** the Spring Boot API: authentication with JWT and refresh tokens, sessions, users and roles, alert rules and their evaluation in ClickHouse, silence detection, alert history with acknowledgment, WebSocket and SSE, webhooks, telemetry query endpoints, and the client that calls the LLM service and re-streams its answers.
 - **Challenges:** two users could acknowledge or resolve the same alert at the same moment, and the second write would silently overwrite the first. He solved it with optimistic locking:
   1. each alert row carries a `@Version` number that JPA checks and increments on every update
   2. when two updates start from the same version, only the first is saved
   3. the second gets **409 Conflict** ("resource is being used by another user"), and the change that won is pushed live to every connected user over the WebSocket
 
-### Ismail El Moufid (isel-mou): Product Owner, Developer
-- **As Product Owner:** defined the product vision, prioritized features, and validated finished work.
+### Ismail El Moufid (isel-mou): Technical Lead / Architect, Developer
+- **As Technical Lead:** defined the service architecture and the contracts between services, made the technology choices, and reviewed critical changes.
 - **What he built:**
   - The Docker Compose deployment.
   - Caddy, with HTTPS from its own local certificate authority.
