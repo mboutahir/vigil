@@ -5,6 +5,8 @@ import type { AlertNotification } from '../api/alertNotificationsApi';
 
 export type AlertsStreamStatus = 'connecting' | 'connected' | 'disconnected';
 
+const MAX_RECONNECT_DELAY_MS = 30_000;
+
 type WsAlertHistory = Omit<AlertHistory, 'id'> & {
   alert_history_id: string;
 };
@@ -69,6 +71,8 @@ export default function useAlertsWebSocket({
     let ws: WebSocket | null = null;
     let stopped = false;
     let statusTimer: number | undefined;
+    let reconnectTimer: number | undefined;
+    let attempts = 0;
 
     const showResult = (result: 'connected' | 'disconnected') => {
       window.clearTimeout(statusTimer);
@@ -88,6 +92,7 @@ export default function useAlertsWebSocket({
 
       ws.onopen = () => {
         if (stopped) return;
+        attempts = 0;
         showResult('connected');
         onReconnectRef.current();
       };
@@ -95,6 +100,10 @@ export default function useAlertsWebSocket({
       ws.onclose = () => {
         if (stopped) return;
         showResult('disconnected');
+        // Retry after 1s, 2s, 4s... up to 30s, so a restarted API is picked up without a click.
+        const delay = Math.min(MAX_RECONNECT_DELAY_MS, 1000 * 2 ** attempts);
+        attempts += 1;
+        reconnectTimer = window.setTimeout(connect, delay);
       };
 
       ws.onmessage = (event) => {
@@ -129,6 +138,7 @@ export default function useAlertsWebSocket({
     return () => {
       stopped = true;
       window.clearTimeout(statusTimer);
+      window.clearTimeout(reconnectTimer);
       ws?.close();
     };
   }, [accessToken, retryVersion]);
