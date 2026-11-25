@@ -153,7 +153,10 @@ export default function useUsersSettings({
       isValid = false;
     }
 
-    if (password && !PASSWORD_REGX.test(password)) {
+    if (password.length > 50) {
+      setPasswordError('Password must be 50 characters or fewer');
+      isValid = false;
+    } else if (password && !PASSWORD_REGX.test(password)) {
       setPasswordError('8+ chars, uppercase, lowercase, number, symbol');
       isValid = false;
     }

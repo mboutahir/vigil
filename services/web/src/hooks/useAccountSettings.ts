@@ -76,6 +76,9 @@ export default function useAccountSettings() {
     if (!newPassword) {
       setNewPasswordError('New password is required');
       isValid = false;
+    } else if (newPassword.length > 50) {
+      setNewPasswordError('Password must be 50 characters or fewer');
+      isValid = false;
     } else if (!PASSWORD_REGX.test(newPassword)) {
       setNewPasswordError('8+ chars, uppercase, lowercase, number, symbol');
       isValid = false;

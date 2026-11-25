@@ -60,6 +60,9 @@ export default function useAuthForm({
     if (password.length === 0) {
       setPasswordError('Password is required');
       isValid = false;
+    } else if (password.length > 50) {
+      setPasswordError('Password must be 50 characters or fewer');
+      isValid = false;
     } else if (validatePasswordStrength && !PASSWORD_REGX.test(password)) {
       setPasswordError('8+ chars, uppercase, lowercase, number, symbol');
       setFormError(new Error('Weak password'));
