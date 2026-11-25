@@ -26,7 +26,7 @@ export default function CodeSnippet({ code, label }: Data) {
   }
 
   return (
-    <div className="mt-2 border border-vigil-border bg-vigil-surface-code">
+    <div className="rounded-(--vigil-radius-control) mt-2 border border-vigil-border bg-vigil-surface-code">
       <div className="flex items-center justify-between gap-3 border-b border-vigil-border px-3 py-2">
         <span className="text-[12px] text-vigil-muted">{label}</span>
         <button
@@ -35,7 +35,7 @@ export default function CodeSnippet({ code, label }: Data) {
           disabled={copied}
           aria-label={copied ? `${label} copied` : `Copy ${label}`}
           title={copied ? 'Copied' : 'Copy'}
-          className="cursor-pointer px-2 py-1 text-[11px] text-vigil-muted hover:text-vigil-text active:scale-95 disabled:text-vigil-accent"
+          className="cursor-pointer px-2 py-1 text-xs text-vigil-muted hover:text-vigil-text active:scale-95 disabled:text-vigil-accent"
         >
           <FontAwesomeIcon icon={copied ? faCheck : faCopy} />
         </button>

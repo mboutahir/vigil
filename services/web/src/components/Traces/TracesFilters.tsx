@@ -56,8 +56,8 @@ export default function TracesFilters({
     <div className="mb-9">
       <div className="flex justify-between items-center mb-7">
         <div className="flex items-center space-x-4">
-          <SwitchButton checked={live} onCheckedChange={onLiveChange} />
-          <span className="text-2xl text-vigil-muted">{label.text}</span>
+          <SwitchButton label="Live traces" checked={live} onCheckedChange={onLiveChange} />
+          <span className="font-heading text-lg font-medium text-vigil-muted">{label.text}</span>
         </div>
         <button
      //label next to switch butten and switch button logix

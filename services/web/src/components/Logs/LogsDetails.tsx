@@ -7,18 +7,18 @@ interface Data {
 
 export default function LogsDetails({ attributes, message }: Data) {
   return (
-    <div className="bg-vigil-bg px-3 py-4.5 space-y-4 mono">
+    <div className="bg-vigil-bg px-3 py-4.5 space-y-4">
       <div>
         <div className="title uppercase mb-2 text-[12px] text-vigil-muted-extra tracking-wider">
           Message
         </div>
-        <div className="text-[14px]">{message}</div>
+        <div className="whitespace-pre-wrap wrap-anywhere text-[14px]">{message}</div>
       </div>
       <div>
         <div className="attribute uppercase mb-2 text-[12px] text-vigil-muted-extra tracking-wider">
           Attributes
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="mono grid gap-3 sm:grid-cols-2">
           {Object.entries(attributes).map(([key, value]) => (
             <p
               key={key}

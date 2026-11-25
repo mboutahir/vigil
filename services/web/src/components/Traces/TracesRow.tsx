@@ -37,24 +37,24 @@ export default function TracesRow({
     <>
     <tr
       onClick={onSelect}
-      className={`border-b border-vigil-border hover:bg-vigil-row-hover transition-colors duration-200 cursor-pointer relative after:absolute after:right-5 after:top-1/2 after:-translate-y-1/2 ${isSelected ? "after:content-['▴']" : "after:content-['▾']"} text-[12px] text-vigil-muted`}
+      className={`border-b border-vigil-border hover:bg-vigil-row-hover transition-colors duration-200 cursor-pointer relative after:absolute after:right-5 after:top-1/2 after:-translate-y-1/2 ${isSelected ? "after:content-['▴']" : "after:content-['▾']"} text-sm text-vigil-muted`}
     >
       <td
       //title shows the full date
         title={formatTime(trace.timestamp)}
-        className="text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3 whitespace-nowrap"
+        className="py-2.5 md:py-3 px-2 md:px-3 whitespace-nowrap"
       >
       {/* when the trace happened  */}
         {timeAgo(trace.timestamp)}
       </td>
       {/* service and name */}
-      <td className="text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3 truncate max-w-40">
+      <td className="py-2.5 md:py-3 px-2 md:px-3 truncate max-w-40">
         {trace.service}
       </td>
-      <td className="text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3 truncate max-w-60">
+      <td className="py-2.5 md:py-3 px-2 md:px-3 truncate max-w-60">
         {trace.name}
       </td>
-      <td className="text-[13px] py-1 md:py-3 px-2 md:px-3">
+      <td className="py-2.5 md:py-3 px-2 md:px-3">
         <div className="flex items-center gap-2">
           <div className="h-1 w-11 bg-vigil-panel">
             {/* duration of the bar yellow or red or green and duration width based on max duration then write duration of the trace  */}
@@ -65,19 +65,19 @@ export default function TracesRow({
               }}
             />
           </div>
-          <span className="mono text-vigil-muted whitespace-nowrap">
+          <span className="tabular-nums text-vigil-muted whitespace-nowrap">
             {formatDuration(trace.duration_ms)}
           </span>
         </div>
       </td>
       {/* stattus color and status  */}
-      <td className="text-[13px] py-1 md:py-3 px-2 md:px-3">
+      <td className="text-[13px] py-2.5 md:py-3 px-2 md:px-3">
         <span className={`px-2 py-1 mono ${statusColors[trace.status]}`}>
           {trace.status}
         </span>
       </td>
       {/* icon to copy */}
-      <td className="text-[13px] py-1 md:py-3 px-2 md:px-3 pe-12 mono">
+      <td className="text-[13px] py-2.5 md:py-3 px-2 md:px-3 pe-12 mono">
         <button
           type="button"
           title="Copy trace ID"

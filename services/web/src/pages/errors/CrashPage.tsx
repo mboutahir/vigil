@@ -8,7 +8,7 @@ export default function CrashPage({ resetErrorBoundary }: FallbackProps) {
       className="grid h-full min-h-64 place-items-center text-center"
     >
       <div>
-        <h2 className="mb-2 text-1xl font-semibold sm:text-2xl">
+        <h2 className="mb-2 text-xl font-semibold sm:text-2xl">
           Something went wrong
         </h2>
         <p className="mb-6 text-base text-vigil-muted">

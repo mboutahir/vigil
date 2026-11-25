@@ -82,14 +82,14 @@ export default function AlertsDetails({ alert }: Props) {
   const { openAI } = useAIDrawer();
 
   return (
-    <div className="bg-vigil-bg px-3 py-4.5 space-y-4 mono">
+    <div className="bg-vigil-bg px-3 py-4.5 space-y-4">
       <div>
         <div className="flex justify-between items-center">
           <div className="uppercase mb-2 text-[12px] text-vigil-muted-extra tracking-wider">
             Evaluation snapshot
           </div>
           <AskAIButton
-            className="py-2.25! w-22! text-[11px]!"
+            className="py-2.25! w-22! text-xs!"
             onClick={() => openAI(alert.id)}
           />
         </div>

@@ -6,7 +6,7 @@ interface Props {
   error?: string;
 }
 
-const linkClass = 'text-vigil-state-info-text hover:underline';
+const linkClass = 'text-vigil-accent hover:underline';
 
 export default function TermsCheckbox({ checked, onChange, error }: Props) {
   return (

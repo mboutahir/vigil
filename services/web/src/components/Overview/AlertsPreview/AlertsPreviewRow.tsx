@@ -6,7 +6,7 @@ import { timeAgo } from '../../shared/utils/format';
 import { OTHER_CLASS, SEVERITY_CLASS, describeAlert } from '../overviewData';
 
 const actionBtn =
-  'border border-vigil-border uppercase text-[9px] sm:text-[10px] tracking-wider h-7 sm:h-8 w-14 sm:w-16 cursor-pointer text-vigil-muted hover:text-vigil-text-hover hover:border-vigil-border-hover transition-[color, border-color] duration-300';
+  'border border-vigil-border uppercase text-xs tracking-wider h-7 sm:h-8 min-w-14 px-1.5 cursor-pointer text-vigil-muted hover:text-vigil-text-hover hover:border-vigil-border-hover transition-colors duration-300';
 
 interface Data {
   alert: AlertHistory;
@@ -39,26 +39,26 @@ export default function AlertsPreviewRow({
       >
         <div className="flex items-center min-w-0">
           <div
-            className={`shrink-0 text-[8px] sm:text-[10px] tracking-widest uppercase py-0.5 w-15 sm:w-16.5 text-center me-3 ${SEVERITY_CLASS[alert.severity] ?? OTHER_CLASS}`}
+            className={`shrink-0 text-xs tracking-widest uppercase py-0.5 w-18 text-center me-3 ${SEVERITY_CLASS[alert.severity] ?? OTHER_CLASS}`}
           >
             {alert.severity}
           </div>
           <div className="min-w-0">
             <div className="text-[12px] mb-0.5 truncate">{alert.service}</div>
-            <div className="xs:text-[9px] text-[11px] text-vigil-muted-extra truncate">
+            <div className="text-xs text-vigil-muted-extra truncate">
               {describeAlert(alert)}
             </div>
           </div>
         </div>
         <div className="flex items-center justify-end shrink-0">
           <span
-            className="text-[8.5px] sm:text-[10px] me-2 sm:me-3 text-vigil-muted-extra"
+            className="text-xs me-2 sm:me-3 text-vigil-muted-extra"
             title={new Date(alert.triggered_at).toLocaleString()}
           >
             {timeAgo(alert.triggered_at)}
           </span>
           {next === null ? (
-            <span className="text-[10px] text-vigil-muted-extra w-14 sm:w-16 text-center">
+            <span className="text-xs text-vigil-muted-extra w-14 sm:w-16 text-center">
               ✓ done
             </span>
           ) : (
@@ -80,7 +80,7 @@ export default function AlertsPreviewRow({
       </div>
       {isOpen && (
         <div className="px-5 py-3 mono bg-vigil-panel">
-          <p className="text-[11px] tracking-wide text-vigil-muted mb-2 whitespace-pre-wrap">
+          <p className="text-xs tracking-wide text-vigil-muted mb-2 whitespace-pre-wrap">
             {alert.llm_analysis ?? 'The AI analysis is not ready yet.'}
           </p>
           <AskAIButton onClick={() => openAI(alert.id)} />

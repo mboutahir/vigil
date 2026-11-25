@@ -11,7 +11,7 @@ export default function ServicesOnboardingPage() {
           <p className="text-[12px] text-vigil-state-verified-text">
             YOUR ADMIN ACCOUNT IS READY
           </p>
-          <h1 className="mb-2 text-[25px] font-semibold md:text-[36px]">
+          <h1 className="mb-2 text-2xl font-semibold md:text-[30px]">
             Connect your first service
           </h1>
         </div>

@@ -1,42 +1,36 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { NavLink } from 'react-router-dom';
 
 interface Data {
   title: string;
+  icon: IconDefinition;
   path: string;
 }
 
-export default function SidebarItem({ title, path }: Data) {
+export default function SidebarItem({ title, path, icon }: Data) {
   return (
     <NavLink
       to={path}
       className={({ isActive }) =>
-        `relative
-        block
-        max-w-100
-        tracking-wide
-        capitalize
-        py-2.5 ps-7
-        text-[14px]
-        md:text-[16px]
-        transition-colors
-        duration-400
-        before:absolute
-        before:left-0
-        before:top-0
-        before:w-0.5
-        before:h-full
-        before:opacity-0
-        before:transition-opacity
-        before:duration-400
-        ${
+        `flex items-center gap-3 py-2 ps-7 text-[14px] font-medium capitalize transition-colors ${
           isActive
-            ? 'bg-vigil-accent-selected text-vigil-accent before:opacity-100 before:bg-vigil-accent'
-            : 'text-vigil-muted hover:text-vigil-text hover:bg-vigil-accent-soft hover:before:opacity-100 hover:before:bg-vigil-text'
+            ? 'bg-vigil-row-hover text-vigil-text'
+            : 'text-vigil-muted hover:bg-vigil-accent-soft hover:text-vigil-text'
         }`
       }
       end={path !== '/settings'}
     >
-      {title}
+      {({ isActive }) => (
+        <>
+          <FontAwesomeIcon
+            icon={icon}
+            aria-hidden="true"
+            className={`w-4! shrink-0 ${isActive ? 'text-vigil-accent' : ''}`}
+          />
+          {title}
+        </>
+      )}
     </NavLink>
   );
 }

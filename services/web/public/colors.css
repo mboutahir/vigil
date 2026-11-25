@@ -1,40 +1,44 @@
 :root {
+    --vigil-radius-badge: 6px;
+    --vigil-radius-control: 9px;
+    --vigil-radius-panel: 14px;
+
     /* Brand and interaction accents */
-    --vigil-accent: #2196f3;
-    --vigil-accent-soft: #2195f309;
-    --vigil-accent-badge: #2195f310;
-    --vigil-accent-selected: #2195f317;
-    --vigil-accent-border-hover: #2195f369;
-    --vigil-accent-border-selected: #2195f38c;
+    --vigil-accent: #ff9830;
+    --vigil-accent-soft: #ff983009;
+    --vigil-accent-badge: #ff983010;
+    --vigil-accent-selected: #ff983017;
+    --vigil-accent-border-hover: #ff983069;
+    --vigil-accent-border-selected: #ff98308c;
 
     /* Surfaces and borders */
-    --vigil-bg: #050910;
-    --vigil-bg-input: #0a0f1e;
-    --vigil-surface: #080d1a;
-    --vigil-border: #1a2333;
-    --vigil-border-muted: rgba(26, 35, 51, 0.6);
-    --vigil-panel: #0d1425;
-    --vigil-row-hover: #0c1424;
-    --vigil-surface-code: #070b14;
-    --vigil-surface-ai: #0d1320;
-    --vigil-surface-inset: #0d1426;
-    --vigil-surface-legal: #0d111a;
-    --vigil-border-legal: #1b2236;
-    --vigil-overlay: #050810b3;
-    --vigil-card: var(--vigil-bg-input);
+    --vigil-bg: #0b0c0f;
+    --vigil-bg-input: #0b0c0f;
+    --vigil-surface: #131518;
+    --vigil-border: #2f3237;
+    --vigil-border-muted: #24262b;
+    --vigil-panel: #1b1e23;
+    --vigil-row-hover: #24272d;
+    --vigil-surface-code: #0a0b0d;
+    --vigil-surface-ai: #181a1d;
+    --vigil-surface-inset: #101215;
+    --vigil-surface-legal: #131518;
+    --vigil-border-legal: #2f3237;
+    --vigil-overlay: #060709b3;
+    --vigil-card: var(--vigil-surface);
 
     /* Text and neutral details */
-    --vigil-text: #ffffff;
+    --vigil-text: #f1f2f4;
     --vigil-on-accent: #000000;
-    --vigil-muted: #6b7da8;
-    --vigil-muted-extra: #6b7da892;
-    --vigil-muted-timestamp: #6b7da895;
-    --vigil-muted-divider: #6b7da84e;
-    --vigil-muted-badge: rgba(107,125,168,0.08);
-    --vigil-text-code: #e8f0ff;
-    --vigil-text-legal: #c3cae0;
+    --vigil-muted: #b5b8c0;
+    --vigil-muted-extra: #a4a7b0;
+    --vigil-muted-timestamp: #a4a7b0;
+    --vigil-muted-divider: #b5b8c04e;
+    --vigil-muted-badge: rgba(181,184,192,0.08);
+    --vigil-text-code: #e4e5e9;
+    --vigil-text-legal: #c6c8cf;
     --vigil-text-secondary: #9ca3af;
-    --vigil-text-dim: #6b7280;
+    --vigil-text-dim: #969aa4;
     --vigil-text-hover: #ffffffc2;
     --vigil-text-subtle: #ffffffd0;
     --vigil-border-hover: #ffffff80;
@@ -43,61 +47,61 @@
     --vigil-watermark: rgba(255, 255, 255, 0.025);
 
     /* Telemetry statuses and severities */
-    --vigil-success: #00d68f;
-    --vigil-success-bg: #00d68f1a;
-    --vigil-success-border: #00d68f33;
-    --vigil-success-outline: #00d68f60;
-    --vigil-success-switch: #00d68f26;
-    --vigil-success-resolved: #072529;
-    --vigil-success-glow: rgba(0, 214, 143, 0.2);
-    --vigil-warning: #f59e0b;
-    --vigil-warning-bg: #f59e0b1a;
-    --vigil-warning-active: #f59e0b40;
-    --vigil-warning-border: #cf830236;
-    --vigil-warning-trace-border: #cf83024d;
-    --vigil-warning-badge-bg: #f59e0b14;
-    --vigil-warning-badge-border: #f59e0b59;
+    --vigil-success: #73bf69;
+    --vigil-success-bg: #73bf691a;
+    --vigil-success-border: #73bf6933;
+    --vigil-success-outline: #73bf6960;
+    --vigil-success-switch: #73bf6926;
+    --vigil-success-resolved: #19271e;
+    --vigil-success-glow: rgba(115, 191, 105, 0.2);
+    --vigil-warning: #ffc400;
+    --vigil-warning-bg: #ffc4001a;
+    --vigil-warning-active: #ffc40040;
+    --vigil-warning-border: #ffc40036;
+    --vigil-warning-trace-border: #ffc4004d;
+    --vigil-warning-badge-bg: #ffc40014;
+    --vigil-warning-badge-border: #ffc40059;
     --vigil-critical: #ff4757;
     --vigil-critical-bg: #ff47571a;
-    --vigil-critical-border: #ff475632;
+    --vigil-critical-border: #ff475732;
     --vigil-critical-active: #ff475740;
-    --vigil-log-error: #ff6b81;
-    --vigil-log-error-bg: #ff6b811a;
-    --vigil-log-error-border: #ff6b814d;
-    --vigil-status-muted-bg: #6b7da81a;
-    --vigil-status-muted-active: #6b7da840;
-    --vigil-status-muted-outline: #6b7da860;
-    --vigil-status-muted-border: #323b4b8a;
-    --vigil-status-sent-bg: #141b2c;
+    --vigil-log-error: #ff7951;
+    --vigil-log-error-bg: #ff79511a;
+    --vigil-log-error-border: #ff79514d;
+    --vigil-status-muted-bg: #b5b8c01a;
+    --vigil-status-muted-active: #b5b8c040;
+    --vigil-status-muted-outline: #b5b8c060;
+    --vigil-status-muted-border: #575b638a;
+    --vigil-status-sent-bg: var(--vigil-panel);
 
     /* Signal tags and notifications */
     --vigil-signal-logs-bg: #7c3aed1f;
     --vigil-signal-logs-text: #b39bf0;
     --vigil-signal-logs-border: #50466a;
-    --vigil-notification-unread: #00e5ff0a;
-    --vigil-notification-hover: #63b3ed0d;
+    --vigil-notification-unread: #ff98300d;
+    --vigil-notification-hover: #ffffff0d;
 
     /* Charts, scrollbars, and live updates */
-    --vigil-chart-tick: #4a5d7e;
-    --vigil-chart-grid: rgba(99,179,237,.08);
-    --vigil-chart-border: rgba(99,179,237,.2);
-    --vigil-chart-error: #ef4444;
-    --vigil-chart-purple: #a855f7;
-    --vigil-chart-cyan: #06b6d4;
-    --vigil-chart-pink: #ec4899;
-    --vigil-chart-lime: #84cc16;
-    --vigil-preview-hover: rgba(99,179,237,.03);
-    --vigil-scrollbar: rgba(99, 179, 237, 0.25);
-    --vigil-scrollbar-hover: rgba(99, 179, 237, 0.276);
-    --vigil-live-flash: rgba(47, 150, 255, 0.3);
+    --vigil-chart-tick: #a4a7b0;
+    --vigil-chart-grid: #ffffff12;
+    --vigil-chart-border: var(--vigil-border);
+    --vigil-chart-error: var(--vigil-critical);
+    --vigil-chart-purple: #b877d9;
+    --vigil-chart-cyan: #56b3d9;
+    --vigil-chart-pink: #ef83bd;
+    --vigil-chart-lime: #a4cf71;
+    --vigil-preview-hover: var(--vigil-row-hover);
+    --vigil-scrollbar: #51545c;
+    --vigil-scrollbar-hover: #747781;
+    --vigil-live-flash: #73bf6933;
 
     /* Toasts and confirmation dialogs */
-    --vigil-toast-bg: #111827;
-    --vigil-toast-border: #1f2937;
+    --vigil-toast-bg: var(--vigil-panel);
+    --vigil-toast-border: var(--vigil-border);
     --vigil-toast-text: #e5e7eb;
-    --vigil-toast-on-action: #0a0e17;
-    --vigil-toast-success: #10b981;
-    --vigil-dialog-bg: #0a0e1e;
+    --vigil-toast-on-action: var(--vigil-bg);
+    --vigil-toast-success: var(--vigil-success);
+    --vigil-dialog-bg: var(--vigil-panel);
     --vigil-dialog-danger: #ef4444ce;
     --vigil-logout: #fb2c36e2;
     --vigil-shadow: rgba(0, 0, 0, 0.5);
@@ -106,7 +110,7 @@
     --vigil-state-danger-soft: oklch(80.8% 0.114 19.571);
     --vigil-state-danger-text: oklch(70.4% 0.191 22.216);
     --vigil-state-danger: oklch(63.7% 0.237 25.331);
-    --vigil-state-info-text: oklch(70.7% 0.165 254.624);
+    --vigil-state-info-text: #65b5ff;
     --vigil-state-info: oklch(62.3% 0.214 259.815);
     --vigil-signal-metrics: oklch(54.6% 0.245 262.881);
     --vigil-state-warning-soft: oklch(85.2% 0.199 91.936);

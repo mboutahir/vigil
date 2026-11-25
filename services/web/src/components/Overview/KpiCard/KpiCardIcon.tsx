@@ -6,13 +6,14 @@ import {
   type IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { darkBadge } from '../../shared/severityColors';
 import type { KpiState } from './KpiCardData';
 
 const ICONS: Record<KpiState, { icon: IconDefinition; color: string }> = {
-  critical: { icon: faFire, color: 'bg-vigil-state-danger/15 text-vigil-state-danger-text' },
-  warning: { icon: faArrowTrendUp, color: 'bg-vigil-state-attention/15 text-vigil-state-attention-text' },
-  unack: { icon: faUserClock, color: 'bg-vigil-state-info/15 text-vigil-state-info-text' },
-  healthy: { icon: faServer, color: 'bg-vigil-state-success/15 text-vigil-state-success-text' },
+  critical: { icon: faFire, color: 'text-vigil-critical' },
+  warning: { icon: faArrowTrendUp, color: 'text-vigil-warning' },
+  unack: { icon: faUserClock, color: 'text-vigil-state-info-text' },
+  healthy: { icon: faServer, color: 'text-vigil-state-success-text' },
 };
 
 interface Data {
@@ -22,9 +23,8 @@ interface Data {
 export default function KpiCardIcon({ cardIcon }: Data) {
   const { icon, color } = ICONS[cardIcon];
   return (
-    <FontAwesomeIcon
-      className={`p-2 text-[11px] me-3 w-3! h-3! ${color}`}
-      icon={icon}
-    />
+    <span className={`me-3 inline-flex size-8 shrink-0 items-center justify-center ${darkBadge} ${color}`} aria-hidden="true">
+      <FontAwesomeIcon className="size-4!" icon={icon} />
+    </span>
   );
 }

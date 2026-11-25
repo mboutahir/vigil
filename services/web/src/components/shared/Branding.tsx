@@ -1,5 +1,5 @@
 interface Data {
-  tagline: string;
+  tagline?: string;
   title: {
     white: string;
     blue: string;
@@ -14,8 +14,8 @@ interface Data {
 
 export default function Branding({ tagline, title, caption, features }: Data) {
   return (
-    <div className="content w-full lg:w-135">
-      <p className="tagline">{tagline}</p>
+    <div className="content w-full max-w-135">
+      {tagline && <p className="tagline">{tagline}</p>}
       <h1 className="title">
         {title.white}
         <span className="text-vigil-accent"> {title.blue}</span>

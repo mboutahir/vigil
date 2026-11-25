@@ -7,7 +7,7 @@ const TYPES: ChartType[] = ['line', 'bar'];
 
 // same chip look as the alerts and logs filters
 const chip =
-  'border uppercase text-[10px] sm:text-[11px] tracking-wider h-6.5 sm:h-7.5 w-15 sm:w-17 cursor-pointer transition-[color, border-color] duration-300';
+  'border uppercase text-xs tracking-wider h-6.5 sm:h-7.5 min-w-15 px-2 cursor-pointer transition-colors duration-300';
 const chipIdle =
   'border-vigil-border text-vigil-muted hover:text-[#ffffffc2] hover:border-[#ffffff80]';
 const chipActive = 'border-vigil-blue text-vigil-blue';
@@ -24,7 +24,7 @@ const SERIES: Series<Point>[] = [
   {
     key: 'throughput',
     name: 'Throughput',
-    color: 'var(--vigil-accent)',
+    color: 'var(--vigil-success)',
     kind: 'area',
     unit: 'spans/min',
   },
@@ -69,12 +69,12 @@ export default function RequestPerformance({ data, long, note }: Data) {
     type === 'bar' ? SERIES.map((s) => ({ ...s, kind: 'bar' as const })) : SERIES;
 
   return (
-    <div className="flex flex-col h-full min-h-0 border border-vigil-border bg-vigil-card">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-vigil-border px-3 sm:px-5 py-3.5">
+    <div className="rounded-(--vigil-radius-panel) flex flex-col h-full min-h-0 border border-vigil-border bg-vigil-card">
+      <div className="overview-card-header mb-4">
         <h2 className="text-[15px] sm:text-[17px] font-medium tracking-wide">
           Request performance
           {note && (
-            <span className="mono ms-2 text-[11px] text-vigil-muted-extra">
+            <span className="mono ms-2 text-xs text-vigil-muted-extra">
               {note}
             </span>
           )}
@@ -92,7 +92,7 @@ export default function RequestPerformance({ data, long, note }: Data) {
             </button>
           ))}
         </div>
-        <div className="flex gap-4 text-[11px] text-vigil-muted items-center">
+        <div className="flex gap-4 text-xs text-vigil-muted items-center">
           {SERIES.map((s) => (
             <span key={s.key}>
               <span

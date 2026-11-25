@@ -1,3 +1,4 @@
+import { roleBadge } from '../shared/severityColors';
 import { Outlet } from 'react-router-dom';
 import Logo from '../shared/Logo';
 import { useAuth } from '../../auth/authContext';
@@ -10,10 +11,10 @@ export default function OnboardingLayout() {
       <header className="flex py-4 shrink-0 items-center justify-between px-5 sm:px-8 border-b border-b-vigil-border">
         <Logo className="md:text-2xl px-4 md:px-5 m-0!" />
         <div className="flex space-x-3 items-center">
-          <h1 className="text-vigil-muted uppercase text-[10px] md:text-[13px] tracking-wider">
+          <h1 className="text-vigil-muted uppercase text-xs md:text-[13px] tracking-wider">
             {user?.email ?? ''}
           </h1>
-          <h6 className="tracking-wider flex justify-center items-center font-bold client-role text-[7px] md:text-[9px] bg-vigil-accent-badge uppercase px-1 py-0.5 text-vigil-accent border">
+          <h6 className={`tracking-wider flex justify-center items-center font-bold client-role text-xs uppercase px-1 py-0.5 ${roleBadge(user?.role)}`}>
             {user?.role ?? ''}
           </h6>
         </div>

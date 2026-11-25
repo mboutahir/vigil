@@ -16,8 +16,8 @@ export interface MetricGroup {
 export type ChartRow = Record<string, number | null>;
 
 const SERVICE_COLORS = [
-  'var(--vigil-accent)',
   'var(--vigil-success)',
+  'var(--vigil-state-info-text)',
   'var(--vigil-warning)',
   'var(--vigil-chart-purple)',
   'var(--vigil-chart-cyan)',

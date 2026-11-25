@@ -1,3 +1,6 @@
+import { roleBadge } from '../../shared/severityColors';
+import { faArrowRotateRight, faCircleUser } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../auth/authContext';
 import Logo from '../../shared/Logo';
@@ -14,9 +17,11 @@ export default function Sidebar({ status, onRetry }: Data) {
   const { user } = useAuth();
 
   return (
-    <div className="sidebar h-screen bg-vigil-surface w-50 md:w-65 py-3 md:py-4 border-r border-r-vigil-border flex flex-col">
-      <Logo className="md:text-2xl px-4 md:px-5 mx-auto!" />
-      <div className="sidebar-items border-y border-y-vigil-border py-4 my-4 flex-1">
+    <div className="sidebar h-dvh bg-vigil-surface w-65 md:w-65 pb-3 md:pb-4 flex flex-col">
+      <div className="dashboard-header-height flex shrink-0 items-center justify-center">
+        <Logo className="px-4 md:px-5" imageClassName="h-auto w-24 lg:w-30" />
+      </div>
+      <div className="font-heading sidebar-items min-h-0 overflow-y-auto border-b border-vigil-border py-4 mb-4 flex-1">
         {sidebarSections.map((section) => (
           <SidebarSection
             key={section.title}
@@ -25,20 +30,15 @@ export default function Sidebar({ status, onRetry }: Data) {
           />
         ))}
       </div>
-      <div className="footer px-3 text-[8px] md:text-[10px]">
-        <div className="client-info flex justify-between items-center flex-wrap">
-          <h6
-            className="client-mail text-vigil-text-subtle truncate"
-            title={user?.email}
-          >
+      <footer className="footer grid shrink-0 gap-3 px-3 text-xs">
+        <div className="client-info flex items-center gap-2">
+          <FontAwesomeIcon icon={faCircleUser} aria-hidden="true" className="shrink-0 text-vigil-muted" />
+          <span className="client-mail min-w-0 wrap-anywhere text-xs leading-snug text-vigil-text" title={user?.email}>
             {user?.email}
-          </h6>
-          <h6 className="flex justify-center items-center font-bold client-role text-[7px] md:text-[8px] bg-vigil-accent-badge uppercase px-1 py-0.5 text-vigil-accent border">
-            {user?.role}
-          </h6>
+          </span>
         </div>
-        <div className="ws-stream mt-1 flex items-center gap-2 text-[10px] md:text-[11px]">
-          <p
+        <div className="ws-stream grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 text-xs">
+          <p role="status"
             className={
               {
                 connecting: 'text-vigil-muted',
@@ -47,21 +47,26 @@ export default function Sidebar({ status, onRetry }: Data) {
               }[status]
             }
           >
-            <span className="me-1 inline-block h-1.5 w-1.5 rounded bg-current" />
+            <span className="me-1 inline-block h-1.5 w-1.5 rounded-full bg-current" />
             Alerts stream {status}
             {status === 'connecting' ? '…' : ''}
           </p>
+          <span className={`client-role px-1.5 py-1 text-[11px] font-bold uppercase ${roleBadge(user?.role)}`}>
+            {user?.role}
+          </span>
           {status === 'disconnected' && (
             <button
               type="button"
               onClick={onRetry}
-              className="underline cursor-pointer"
+              aria-label="Retry alerts stream connection"
+              className="col-span-full mt-1 inline-flex min-h-8 cursor-pointer items-center gap-2 justify-self-start border border-vigil-border bg-vigil-card px-2.5 text-xs font-medium text-vigil-text hover:border-vigil-accent hover:text-vigil-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vigil-accent"
             >
+              <FontAwesomeIcon icon={faArrowRotateRight} aria-hidden="true" />
               Retry
             </button>
           )}
         </div>
-        <div className="flex gap-1 mt-2 text-[10px] text-vigil-muted">
+        <div className="flex items-center gap-2 text-xs text-vigil-muted">
           <Link
             to="/privacy"
             target="_blank"
@@ -70,7 +75,7 @@ export default function Sidebar({ status, onRetry }: Data) {
           >
             Privacy
           </Link>
-          <span>·</span>
+          <span aria-hidden="true">·</span>
           <Link
             to="/terms"
             target="_blank"
@@ -80,7 +85,7 @@ export default function Sidebar({ status, onRetry }: Data) {
             Terms
           </Link>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

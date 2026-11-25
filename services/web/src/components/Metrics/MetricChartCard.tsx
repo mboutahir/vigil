@@ -24,14 +24,14 @@ interface Data {
   period: Period;
 }
 //the numbers bollow and on the left color and font size
-const tick = { fill: 'var(--vigil-chart-tick)', fontSize: 10 };
+const tick = { fill: 'var(--vigil-chart-tick)', fontSize: 12 };
 
 export default function MetricChartCard({ group, services, period }: Data) {
   const rows = chartRows(group);
 
   return (
     //box around  chart styling
-    <div className="flex flex-col bg-vigil-card border border-vigil-border p-3 sm:p-4">
+    <div className="rounded-(--vigil-radius-panel) flex flex-col bg-vigil-card border border-vigil-border p-3 sm:p-4">
     {/* title: the metric name */}
       <div className="mono text-[12px] text-vigil-muted uppercase truncate mb-3">
         {group.name}
@@ -98,7 +98,7 @@ export default function MetricChartCard({ group, services, period }: Data) {
             <Legend
               iconType="circle"
               iconSize={7}
-              wrapperStyle={{ fontSize: 11, color: 'var(--vigil-muted)' }}
+              wrapperStyle={{ fontSize: 12, color: 'var(--vigil-muted)' }}
             />
             {/* dataKey the values we wanna draw key is service and value is the data
                 key for react to know which line is whcih because map draw multiple Line

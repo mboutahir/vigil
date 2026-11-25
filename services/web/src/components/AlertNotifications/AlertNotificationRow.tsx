@@ -19,8 +19,8 @@ const severityStyle: Record<Severity, { bar: string; text: string }> = {
     text: 'text-vigil-warning',
   },
   info: {
-    bar: 'bg-vigil-muted',
-    text: 'text-vigil-muted',
+    bar: 'bg-vigil-state-info-text',
+    text: 'text-vigil-state-info-text',
   },
 };
 
@@ -69,11 +69,11 @@ export default function AlertNotificationRow({
         >
           {notification.service}
         </span>
-        <span className="shrink-0 text-[.7rem] text-vigil-muted">
+        <span className="shrink-0 text-xs text-vigil-muted">
           {timeAgo(notification.triggered_at)}
         </span>
       </div>
-      <div className="mt-1.5 flex min-h-4.5 items-center justify-between gap-3 text-[.67rem]">
+      <div className="mt-1.5 flex min-h-4.5 items-center justify-between gap-3 text-xs">
         <span>
           <span
             className={`font-semibold tracking-[.5px] uppercase ${style.text}`}
@@ -90,7 +90,7 @@ export default function AlertNotificationRow({
             e.stopPropagation();
             onToggleSeen(notification.alert_history_id, !notification.seen);
           }}
-          className="cursor-pointer border border-vigil-border px-1.75 py-0.5 text-[.6rem] text-vigil-muted-extra opacity-0 transition-opacity group-hover:opacity-100 hover:border-vigil-accent hover:text-vigil-accent focus-visible:opacity-100 disabled:cursor-default disabled:opacity-50 [@media(hover:none)]:opacity-100"
+          className="cursor-pointer border border-vigil-border px-1.75 py-0.5 text-xs text-vigil-muted-extra opacity-0 transition-opacity group-hover:opacity-100 hover:border-vigil-accent hover:text-vigil-accent focus-visible:opacity-100 disabled:cursor-default disabled:opacity-50 [@media(hover:none)]:opacity-100"
         >
           {isUpdating
             ? 'Updating...'

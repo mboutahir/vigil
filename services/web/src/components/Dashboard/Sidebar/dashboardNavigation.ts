@@ -1,25 +1,36 @@
+import {
+  faGaugeHigh,
+  faBell,
+  faList,
+  faChartLine,
+  faDiagramProject,
+  faCirclePlus,
+  faSliders,
+  faGear,
+} from '@fortawesome/free-solid-svg-icons';
+
 export const dashboardNavigation = [
   {
     title: 'monitor',
     links: [
-      { label: 'overview', path: '/overview' },
-      { label: 'alerts', path: '/alerts' },
+      { label: 'overview', icon: faGaugeHigh, path: '/overview' },
+      { label: 'alerts', icon: faBell, path: '/alerts' },
     ],
   },
   {
     title: 'telemetry',
     links: [
-      { label: 'logs', path: '/logs' },
-      { label: 'metrics', path: '/metrics' },
-      { label: 'traces', path: '/traces' },
+      { label: 'logs', icon: faList, path: '/logs' },
+      { label: 'metrics', icon: faChartLine, path: '/metrics' },
+      { label: 'traces', icon: faDiagramProject, path: '/traces' },
     ],
   },
   {
     title: 'configure',
     links: [
-      { label: 'add service', path: '/add-service', adminOnly: true },
-      { label: 'alert rules', path: '/alert-rules', adminOnly: true },
-      { label: 'settings', path: '/settings' },
+      { label: 'add service', icon: faCirclePlus, path: '/add-service', adminOnly: true },
+      { label: 'alert rules', icon: faSliders, path: '/alert-rules', adminOnly: true },
+      { label: 'settings', icon: faGear, path: '/settings' },
     ],
   },
 ];

@@ -53,7 +53,7 @@ export default function AlertsFilters({
         className="bg-vigil-panel"
         mb="mb-0"
       />
-      <div className="w-120">
+      <div className="w-full max-w-120">
         <FormInput
           type="text"
           placeholder="Filter by service"

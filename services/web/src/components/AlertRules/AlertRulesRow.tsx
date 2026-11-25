@@ -52,6 +52,7 @@ export default function AlertRulesRow({
       </td>
       <td className="text-[13px] md:text-[16px] py-1 md:py-3 px-2 md:px-3">
         <SwitchButton
+          label={`Enable ${rule.metric_name} alert rule for ${rule.service}`}
           checked={rule.enabled}
           onCheckedChange={() => onToggle(!rule.enabled)}
         />
@@ -60,14 +61,14 @@ export default function AlertRulesRow({
         <button
           title="Edit"
           onClick={onEdit}
-          className="text-[10px] md:text-[12px] cursor-pointer border border-vigil-border w-8 h-8 text-vigil-muted hover:border-vigil-text/60 hover:text-vigil-text/60 transition-[color,border-color] duration-200"
+          className="text-xs md:text-[12px] cursor-pointer border border-vigil-border w-8 h-8 text-vigil-muted hover:border-vigil-text/60 hover:text-vigil-text/60 transition-[color,border-color] duration-200"
         >
           <FontAwesomeIcon icon={faPenToSquare} />
         </button>
         <button
           title="Delete"
           onClick={onDelete}
-          className="text-[10px] md:text-[12px] cursor-pointer border border-vigil-state-danger/40 w-8 h-8 text-vigil-state-danger/70 hover:border-vigil-state-danger/80 hover:text-vigil-state-danger/80 transition-[color,border-color] duration-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-vigil-state-danger/40 disabled:hover:text-vigil-state-danger/70"
+          className="text-xs md:text-[12px] cursor-pointer border border-vigil-state-danger/40 w-8 h-8 text-vigil-state-danger/70 hover:border-vigil-state-danger/80 hover:text-vigil-state-danger/80 transition-[color,border-color] duration-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-vigil-state-danger/40 disabled:hover:text-vigil-state-danger/70"
         >
           <FontAwesomeIcon icon={faTrashCan} />
         </button>

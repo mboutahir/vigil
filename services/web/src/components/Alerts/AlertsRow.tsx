@@ -118,36 +118,36 @@ export default function AlertsRow(props: Data) {
         id={`alert-${alert.id}`}
         className={`border-b border-vigil-border hover:bg-vigil-row-hover transition-colors duration-200 cursor-pointer relative after:absolute after:right-2 after:top-1/2 after:-translate-y-1/2 ${
           isOpen ? "after:content-['▴']" : "after:content-['▾']"
-        } text-[12px] text-vigil-muted ${isLive ? 'animate-log-flash' : ''}
+        } text-sm text-vigil-muted ${isLive ? 'animate-log-flash' : ''}
         ${isTarget ? 'bg-vigil-accent/10 outline outline-vigil-accent/40' : ''}`}
         onClick={() => {
           markSeenIfNeeded();
           setIsOpen((prev) => !prev);
         }}
       >
-        <td className="text-[12px] py-1 md:py-3 px-2 md:px-3 uppercase tracking-wider">
+        <td className="text-[12px] py-2.5 md:py-3 px-2 md:px-3 uppercase tracking-wider">
           <span className={`px-2 py-1.5 mono ${levelColor}`}>{severity}</span>
         </td>
-        <td className="relative text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3 text-vigil-text">
+        <td className="relative py-2.5 md:py-3 px-2 md:px-3 text-vigil-text">
           {isUnseen && (
             <span className="absolute top-1/2 -translate-y-1/2 -left-2 w-1 h-1 rounded-full bg-vigil-accent"></span>
           )}
           {service}
         </td>
         <td
-          className={`text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3 ${
-            metric_name === 'service_silent' ? 'text-vigil-warning italic' : ''
+          className={`py-2.5 md:py-3 px-2 md:px-3 ${
+            metric_name === 'service_silent' ? 'text-vigil-warning italic' : 'mono'
           }`}
         >
           {metric}
         </td>
         <td
-          className="text-vigil-muted-timestamp text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3"
+          className="text-vigil-muted-timestamp py-2.5 md:py-3 px-2 md:px-3"
           title={triggeredDate.toLocaleString()}
         >
           {lastActive}
         </td>
-        <td className="text-[12px] py-1 md:py-3 px-2 md:px-3 uppercase tracking-wider">
+        <td className="text-[12px] py-2.5 md:py-3 px-2 md:px-3 uppercase tracking-wider">
           <span className={`px-2 py-1.5 mono ${statusColor}`}>
             {getStatusLabel(status)}
           </span>
@@ -155,7 +155,7 @@ export default function AlertsRow(props: Data) {
             <span className="text-vigil-muted ms-3 normal-case">{actor}</span>
           )}
         </td>
-        <td className="text-[15px] py-1 md:py-3 px-2 md:px-3">
+        <td className="text-sm py-2.5 md:py-3 px-2 md:px-3">
           {actions.map((action) => (
             <button
               key={action}

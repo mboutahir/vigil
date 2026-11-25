@@ -141,7 +141,7 @@ export default function MetricsPage() {
             {Array.from({ length: 2 }, (_, i) => (
               <div
                 key={i}
-                className="h-72 bg-vigil-panel border border-vigil-border animate-pulse"
+                className="rounded-(--vigil-radius-panel) h-72 bg-vigil-panel border border-vigil-border animate-pulse"
               />
             ))}
           </div>

@@ -5,7 +5,7 @@ import type { AlertFilter } from '../overviewData';
 const FILTERS: AlertFilter[] = ['open', 'critical', 'warning'];
 
 const chip =
-  'border uppercase text-[10px] sm:text-[11px] tracking-wider h-6.5 sm:h-7.5 w-15 sm:w-17 cursor-pointer transition-[color, border-color] duration-300';
+  'border uppercase text-xs tracking-wider h-6.5 sm:h-7.5 min-w-15 px-2 cursor-pointer transition-colors duration-300';
 const chipIdle =
   'border-vigil-border text-vigil-muted hover:text-vigil-text-hover hover:border-vigil-border-hover';
 const chipActive = 'border-vigil-accent text-vigil-accent';
@@ -32,11 +32,11 @@ export default function AlertsPreview({
   onStatusChange,
 }: Data) {
   return (
-    <div className="flex flex-col h-full min-h-0 border border-vigil-border bg-vigil-card overflow-hidden flex-1">
-      <div className="flex justify-between items-center border-b border-vigil-border px-3 sm:px-5 py-3 sticky bg-vigil-card z-39 top-0">
+    <div className="rounded-(--vigil-radius-panel) flex flex-col h-full min-h-0 border border-vigil-border bg-vigil-card overflow-hidden flex-1">
+      <div className="overview-card-header sticky top-0 z-39 bg-vigil-card">
         <h2 className="text-[15px] sm:text-[17px] font-medium tracking-wide">
           Alerts
-          <span className="mono ms-2 text-[11px] text-vigil-muted-extra">
+          <span className="mono ms-2 text-xs text-vigil-muted-extra">
             {alerts.length}
           </span>
         </h2>
@@ -58,7 +58,12 @@ export default function AlertsPreview({
         {isLoading && <Empty>Loading alerts...</Empty>}
         {error && <Empty className="text-vigil-state-danger-text">{error.message}</Empty>}
         {!isLoading && !error && alerts.length === 0 && (
-          <Empty>Nothing matches this filter and range.</Empty>
+          <div className="flex h-full flex-col">
+            <Empty>Nothing matches this filter and range.</Empty>
+            <div className="flex min-h-0 flex-1 items-center justify-center px-4 pb-5">
+              <img src="/vigil-owl.svg" alt="" className="h-full max-h-36 w-full object-contain grayscale opacity-25" />
+            </div>
+          </div>
         )}
         {alerts.map((alert) => (
           <AlertsPreviewRow

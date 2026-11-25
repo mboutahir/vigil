@@ -80,7 +80,7 @@ export default function VerifyTelemetryStep({
         <SignalStatus name="Traces" received={received.traces} />
         <SignalStatus name="Metrics" received={received.metrics} />
       </div>
-      <div className="border border-vigil-border bg-vigil-card p-4">
+      <div className="rounded-(--vigil-radius-panel) border border-vigil-border bg-vigil-card p-4">
         {missingToken ? (
           <>
             <h3 className="text-[15px] font-semibold text-vigil-state-danger-text">

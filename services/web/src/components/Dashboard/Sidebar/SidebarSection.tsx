@@ -1,9 +1,11 @@
+import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../../auth/authContext';
 import { filterNavigation } from '../../../auth/permissions';
 import SidebarItem from './SidebarItem';
 
 interface Link {
   label: string;
+  icon: IconDefinition;
   path: string;
   adminOnly?: boolean;
 }
@@ -18,11 +20,11 @@ export default function SidebarSection({ title, links }: Data) {
 
   return (
     <div className="sidebar-section flex flex-col mt-1 mb-3">
-      <h1 className="sidebar-section-title text-[10px] md:text-[12px] uppercase text-vigil-muted-extra ms-5 mb-1 tracking-wider!">
+      <h1 className="sidebar-section-title text-xs md:text-[12px] uppercase text-vigil-muted-extra ms-5 mb-1 tracking-wider!">
         {title}
       </h1>
       {navigation.map((nav) => (
-        <SidebarItem key={nav.path} title={nav.label} path={nav.path} />
+        <SidebarItem key={nav.path} title={nav.label} path={nav.path} icon={nav.icon} />
       ))}
     </div>
   );

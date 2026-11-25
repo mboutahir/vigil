@@ -40,7 +40,7 @@ function Wizard({ onExit, firstStepActionLabel, onAddAnother }: Data) {
   return (
     <>
       <OnboardingProgress step={step} existing={flow.existing} />
-      <div className="flex min-h-0 flex-1 flex-col border border-vigil-border bg-vigil-card p-5 md:p-7">
+      <div className="rounded-(--vigil-radius-panel) flex min-h-0 flex-1 flex-col border border-vigil-border bg-vigil-card p-5 md:p-7">
         {step === 1 && <ServiceSetupStep flow={flow} />}
         {step === 2 && <InstallStep flow={flow} />}
         {step === 3 && <TelemetryConfigStep flow={flow} />}

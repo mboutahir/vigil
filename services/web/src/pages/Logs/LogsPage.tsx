@@ -189,10 +189,11 @@ export default function LogsPage() {
       <div className="flex justify-between items-center mb-7">
         <div className="flex items-center space-x-4">
           <SwitchButton
+            label="Live logs"
             checked={isLive}
             onCheckedChange={() => setIsLive((prev) => !prev)}
           />
-          <span className="text-2xl text-vigil-muted capitalize">
+          <span className="font-heading text-lg font-medium text-vigil-muted capitalize">
             {connectionStatus}
           </span>
         </div>
@@ -210,12 +211,12 @@ export default function LogsPage() {
         warnings={logsSummary.warning}
       />
       <div ref={topRef} />
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-250 border-collapse border border-vigil-border">
+      <div className="rounded-(--vigil-radius-panel) overflow-x-auto border border-vigil-border">
+        <table className="w-full min-w-250 border-collapse">
           <thead>
             <tr className="border-b border-vigil-border uppercase text-left text-vigil-muted text-[12px] md:text-[13px] bg-vigil-panel tracking-wide">
-              <th className="py-2 md:py-4 px-2 md:px-3">Time</th>
-              <th className="py-2 md:py-4 px-2 md:px-3">Service</th>
+              <th className="min-w-36 py-2 md:py-4 px-2 md:px-3">Time</th>
+              <th className="min-w-48 py-2 md:py-4 px-2 md:px-3">Service</th>
               <th className="py-2 md:py-4 px-2 md:px-3">Severity</th>
               <th className="py-2 md:py-4 px-2 md:px-3">Message</th>
             </tr>

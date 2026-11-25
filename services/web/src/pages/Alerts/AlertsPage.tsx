@@ -304,8 +304,8 @@ export default function AlertsPage() {
         handleClear={handleClear}
       />
       <div ref={topRef} />
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-250 border-collapse border border-vigil-border">
+      <div className="rounded-(--vigil-radius-panel) overflow-x-auto border border-vigil-border">
+        <table className="w-full min-w-250 border-collapse">
           <thead>
             <tr className="border-b border-vigil-border bg-vigil-panel text-left text-[12px] tracking-wide text-vigil-muted uppercase md:text-[13px]">
               <th className="px-2 py-2 md:px-3 md:py-4">Severity</th>

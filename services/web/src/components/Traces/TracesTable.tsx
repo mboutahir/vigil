@@ -32,8 +32,8 @@ export default function TracesTable({
     //table scroll sideways on mobile and make table tke full box
     //thead headof the table 
     //tr rows one line border loop over column it has all the headers and show them add paddings it draws the headers the 6 headers not the spanj
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-200 border-collapse border border-vigil-border">
+    <div className="rounded-(--vigil-radius-panel) overflow-x-auto border border-vigil-border">
+      <table className="w-full min-w-200 border-collapse">
         <thead>
           <tr className="border-b border-vigil-border uppercase text-left text-vigil-muted text-[12px] md:text-[13px] bg-vigil-panel tracking-wide">
             {COLUMNS.map((column) => (

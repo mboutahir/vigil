@@ -9,7 +9,7 @@ export default function SectionHeader({ title, caption }: Data) {
       <h2 className="text-[15px] sm:text-[17px] font-medium tracking-wide">
         {title}
       </h2>
-      <span className="text-[11px] text-vigil-muted-extra">{caption}</span>
+      <span className="text-xs text-vigil-muted-extra">{caption}</span>
     </div>
   );
 }

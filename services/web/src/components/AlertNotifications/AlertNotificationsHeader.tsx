@@ -8,7 +8,7 @@ export default function AlertNotificationsHeader({ unseenCount }: Data) {
       <h2 className="text-[.95rem] font-bold text-vigil-text">
         Notifications
         {unseenCount > 0 && (
-          <span className="ml-2 text-[.62rem] font-medium text-vigil-accent">
+          <span className="ml-2 text-xs font-medium text-vigil-accent">
             {unseenCount} new
           </span>
         )}

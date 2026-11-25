@@ -31,23 +31,23 @@ export default function LogsRow({
   return (
     <>
       <tr
-        className={`border-b border-vigil-border hover:bg-vigil-row-hover transition-colors duration-200 cursor-pointer relative after:absolute after:right-5 after:top-1/2 after:-translate-y-1/2 ${isOpen ? "after:content-['▴']" : "after:content-['▾']"} text-[12px] text-vigil-muted ${isLive ? 'animate-log-flash' : ''}`}
+        className={`border-b border-vigil-border hover:bg-vigil-row-hover transition-colors duration-200 cursor-pointer relative after:absolute after:right-5 after:top-1/2 after:-translate-y-1/2 ${isOpen ? "after:content-['▴']" : "after:content-['▾']"} text-sm text-vigil-muted ${isLive ? 'animate-log-flash' : ''}`}
         onClick={() => setIsOpen((prev) => !prev)}
       >
         <td
           title={formatTime(timestamp)}
-          className={`text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3 border-l ${borderColor[severity]}`}
+          className={`whitespace-nowrap border-l px-2 py-2.5 md:px-3 md:py-3 ${borderColor[severity]}`}
         >
           {timeAgo(timestamp)}
         </td>
-        <td className="text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3">
+        <td className="py-2.5 md:py-3 px-2 md:px-3">
           {service}
         </td>
-        <td className="text-[13px] py-1 md:py-3 px-2 md:px-3">
+        <td className="text-[13px] py-2.5 md:py-3 px-2 md:px-3">
           <span className={`px-2 py-1 mono ${levelColor}`}>{severity}</span>
         </td>
-        <td className="text-[14px] md:text-[16px] py-1 md:py-3 px-2 md:px-3">
-          {message}
+        <td className="w-full max-w-0 py-2.5 md:py-3 ps-2 md:ps-3 pe-12">
+          <span className="block truncate">{message}</span>
         </td>
       </tr>
       {isOpen && (

@@ -45,7 +45,7 @@ export default function ApiKeyCard({ title, apiKey, info }: Data) {
         </p>
         <div className="flex shrink-0 self-end sm:self-auto items-center space-x-1 md:space-x-2">
           <button
-            className="cursor-pointer px-2 md:px-3 py-1.5 border border-vigil-border text-vigil-muted text-[11px] md:text-[12px] hover:border-vigil-text/50 hover:text-vigil-text/60 transition-[color,border-color] duration-200"
+            className="cursor-pointer px-2 md:px-3 py-1.5 border border-vigil-border text-vigil-muted text-xs md:text-[12px] hover:border-vigil-text/50 hover:text-vigil-text/60 transition-[color,border-color] duration-200"
             onClick={() => setShowed((prev) => !prev)}
           >
             {!showed ? (
@@ -55,7 +55,7 @@ export default function ApiKeyCard({ title, apiKey, info }: Data) {
             )}
           </button>
           <button
-            className={`cursor-pointer px-2 md:px-3 py-1.5 text-[11px] md:text-[12px] border transition-[color,border-color] duration-100 ${!copied ? 'border-vigil-border text-vigil-muted hover:border-vigil-text/50 hover:text-vigil-text/60' : 'border-vigil-accent text-vigil-accent'}`}
+            className={`cursor-pointer px-2 md:px-3 py-1.5 text-xs md:text-[12px] border transition-[color,border-color] duration-100 ${!copied ? 'border-vigil-border text-vigil-muted hover:border-vigil-text/50 hover:text-vigil-text/60' : 'border-vigil-accent text-vigil-accent'}`}
             onClick={handleCopy}
           >
             {!copied ? (
@@ -66,7 +66,7 @@ export default function ApiKeyCard({ title, apiKey, info }: Data) {
           </button>
         </div>
       </div>
-      <div className="text-vigil-muted-extra text-[11px] md:text-[13px] tracking-wide">
+      <div className="text-vigil-muted-extra text-xs md:text-[13px] tracking-wide">
         {info}
       </div>
     </div>

@@ -142,7 +142,7 @@ function DashboardContent() {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
-      <main className="dashboard-bg flex min-h-0 min-w-0 flex-1 flex-col bg-vigil-bg">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-vigil-bg">
         <Header
           title={title}
           onMenuClick={() => setIsSidebarOpen((prev) => !prev)}

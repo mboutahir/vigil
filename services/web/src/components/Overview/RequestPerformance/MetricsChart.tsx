@@ -49,7 +49,7 @@ export default function MetricsChart<T extends Record<string, unknown>>({
 }: Props<T>) {
   const uid = useId().replace(/:/g, '');
   const hasRight = series.some((s) => s.axis === 'right');
-  const tick = { fill: tickColor, fontSize: 10 };
+  const tick = { fill: tickColor, fontSize: 12 };
 
   return (
     <ResponsiveContainer width="100%" height="100%" className="mono">

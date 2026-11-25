@@ -46,7 +46,7 @@ export default function MetricDetails({ metric }: Data) {
   );
 
   return (
-    <div className="bg-vigil-bg px-3 py-4.5 space-y-4 mono">
+    <div className="bg-vigil-bg px-3 py-4.5 space-y-4">
       <div>
         <div className="uppercase mb-2 text-[12px] text-vigil-muted-extra tracking-wider">
           Point
@@ -60,7 +60,7 @@ export default function MetricDetails({ metric }: Data) {
           <div className="uppercase mb-2 text-[12px] text-vigil-muted-extra tracking-wider">
             Attributes
           </div>
-          <div className="flex flex-wrap gap-x-25 gap-y-2">
+          <div className="mono flex flex-wrap gap-x-25 gap-y-2">
             {attributes.map(([key, value]) => (
               <Field key={key} label={key} value={value} />
             ))}

@@ -103,7 +103,7 @@ export default function AIPanel({ onClose }: AIPanelProps) {
         <button
           type="button"
           onClick={handleClose}
-          className="uppercase border border-vigil-muted-divider text-[10px] tracking-widest px-2 text-vigil-muted cursor-pointer hover:opacity-70 duration-300 transition-opacity"
+          className="uppercase border border-vigil-muted-divider text-xs tracking-widest px-2 text-vigil-muted cursor-pointer hover:opacity-70 duration-300 transition-opacity"
         >
           Close
         </button>
@@ -111,13 +111,13 @@ export default function AIPanel({ onClose }: AIPanelProps) {
       <div className="body p-3 flex-1 border-b mb-0 border-b-vigil-muted-divider space-y-2.5 overflow-y-auto">
         {messages.length === 0 && (
           <>
-            <p className="ai-response text-[13px] text-vigil-text-code border border-vigil-border px-4 py-2 tracking-wide bg-vigil-surface-ai">
+            <p className="rounded-(--vigil-radius-control) ai-response text-[13px] text-vigil-text-code border border-vigil-border px-4 py-2 tracking-wide bg-vigil-surface-ai">
               What would you like to know about this alert?
             </p>
             <div className="flex justify-between">
               <button
                 onClick={() => handleSuggestionClick('Why did this fire?')}
-                className="cursor-pointer text-[13px] border border-vigil-border py-2 px-4 tracking-wider text-vigil-muted hover:text-vigil-text-hover hover:border-vigil-border-hover transition-[color, border-color] duration-300"
+                className="cursor-pointer text-[13px] border border-vigil-border py-2 px-4 tracking-wider text-vigil-muted hover:text-vigil-text-hover hover:border-vigil-border-hover transition-colors duration-300"
               >
                 Why did this fire?
               </button>
@@ -125,13 +125,13 @@ export default function AIPanel({ onClose }: AIPanelProps) {
                 onClick={() =>
                   handleSuggestionClick('Is this a recurring pattern?')
                 }
-                className="cursor-pointer text-[13px] border border-vigil-border py-2 px-4 tracking-wider text-vigil-muted hover:text-vigil-text-hover hover:border-vigil-border-hover transition-[color, border-color] duration-300"
+                className="cursor-pointer text-[13px] border border-vigil-border py-2 px-4 tracking-wider text-vigil-muted hover:text-vigil-text-hover hover:border-vigil-border-hover transition-colors duration-300"
               >
                 Is this a recurring pattern?
               </button>
               <button
                 onClick={() => handleSuggestionClick('Suggest a fix')}
-                className="cursor-pointer text-[13px] border border-vigil-border py-2 px-4 tracking-wider text-vigil-muted hover:text-vigil-text-hover hover:border-vigil-border-hover transition-[color, border-color] duration-300"
+                className="cursor-pointer text-[13px] border border-vigil-border py-2 px-4 tracking-wider text-vigil-muted hover:text-vigil-text-hover hover:border-vigil-border-hover transition-colors duration-300"
               >
                 Suggest a fix
               </button>
@@ -141,13 +141,13 @@ export default function AIPanel({ onClose }: AIPanelProps) {
         {messages.map((message) => (
           <p
             key={message.id}
-            className={`wrap-break-word text-[14px] text-vigil-text-code border border-vigil-border px-4 py-2.5 tracking-wide w-fit max-w-[90%] ${message.role === 'assistant' ? 'bg-vigil-surface-ai' : 'bg-vigil-accent/80 ms-auto'}`}
+            className={`rounded-(--vigil-radius-control) wrap-break-word text-[14px] text-vigil-text-code border border-vigil-border px-4 py-2.5 tracking-wide w-fit max-w-[90%] ${message.role === 'assistant' ? 'bg-vigil-surface-ai' : 'bg-vigil-accent/80 ms-auto'}`}
           >
             {message.content}
           </p>
         ))}
         {answer && (
-          <p className="wrap-break-word text-[14px] text-vigil-text-code border border-vigil-border px-4 py-2.5 tracking-wide bg-vigil-surface-ai w-fit max-w-[90%] whitespace-pre-wrap">
+          <p className="rounded-(--vigil-radius-control) wrap-break-word text-[14px] text-vigil-text-code border border-vigil-border px-4 py-2.5 tracking-wide bg-vigil-surface-ai w-fit max-w-[90%] whitespace-pre-wrap">
             {answer}
           </p>
         )}
@@ -157,7 +157,7 @@ export default function AIPanel({ onClose }: AIPanelProps) {
           </p>
         )}
         {error && (
-          <p className="wrap-break-word text-[14px] text-vigil-state-danger-text border px-4 py-2.5 tracking-wide w-fit max-w-[90%] whitespace-pre-wrap bg-vigil-state-danger-text/10">
+          <p className="rounded-(--vigil-radius-control) wrap-break-word text-[14px] text-vigil-state-danger-text border px-4 py-2.5 tracking-wide w-fit max-w-[90%] whitespace-pre-wrap bg-vigil-state-danger-text/10">
             {error.message}
           </p>
         )}

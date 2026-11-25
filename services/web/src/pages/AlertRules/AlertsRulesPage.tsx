@@ -73,10 +73,10 @@ export default function AlertsRulesPage() {
       <Button
         value="+ create rule"
         onClick={() => setModal({ mode: 'create' })}
-        className="text-[11px]! md:text-[12px]! lg:text-[13px]! py-2! md:py-2.5! px-5! md:px-7! block! ms-auto! mb-8!"
+        className="text-xs! md:text-[12px]! lg:text-[13px]! py-2! md:py-2.5! px-5! md:px-7! block! ms-auto! mb-8!"
       />
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-250 border-collapse border border-vigil-border">
+      <div className="rounded-(--vigil-radius-panel) overflow-x-auto border border-vigil-border">
+        <table className="w-full min-w-250 border-collapse">
           <thead>
             <tr className="border-b border-vigil-border uppercase text-left text-vigil-muted text-[12px] md:text-[13px] bg-vigil-panel tracking-wide">
               <th className="py-2 md:py-4 px-2 md:px-3">Service</th>

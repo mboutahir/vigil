@@ -27,15 +27,15 @@ export default function AuthFormShell(props: Data) {
   const blocked = !!props.isSetup && !props.termsAccepted;
 
   return (
-    <div className="setup-form w-full px-20 sm:px-40 lg:px-0 lg:w-3/5 xl:w-3/6">
-      <h1 className="title text-[33px] text-center lg:text-start">
+    <div className="setup-form w-full max-w-md px-5 sm:px-8">
+      <h1 className="title text-2xl sm:text-[28px] text-center lg:text-start">
         {props.title}
       </h1>
       <p className="caption text-vigil-muted mt-2 mb-8 text-center lg:text-start">
         {props.caption}
       </p>
       {props.formError && (
-        <p className="text-sm text-vigil-state-danger-soft border border-vigil-state-danger-text p-4 bg-vigil-bg-input mb-4 capitalize">
+        <p className="rounded-(--vigil-radius-control) text-sm text-vigil-state-danger-soft border border-vigil-state-danger-text p-4 bg-vigil-bg-input mb-4 capitalize">
           {props.formError.message}
         </p>
       )}

@@ -21,7 +21,7 @@ const KEY_ATTRIBUTES = [
 //helper instead of each time rightting the two lines
 function Field({ label, value }: { label: string; value: string }) {
   return (
-    <p className="text-vigil-muted-extra text-[13px] break-all">
+    <p className={`text-vigil-muted-extra text-[13px] break-all ${label === 'time' ? '' : 'mono'}`}>
       {label}: <span className="text-vigil-text ms-1 text-[14px]">{value}</span>
     </p>
   );
@@ -46,7 +46,7 @@ export default function TraceDetails({ span, traceSpans }: Data) {
   const total = Math.max(1, traceEnd - traceStart);
 
   return (
-    <div className="bg-vigil-bg px-3 py-4.5 space-y-4 mono">
+    <div className="bg-vigil-bg px-3 py-4.5 space-y-4">
       <div>
         <div className="uppercase mb-2 text-[12px] text-vigil-muted-extra tracking-wider">
           Span
@@ -97,7 +97,7 @@ export default function TraceDetails({ span, traceSpans }: Data) {
                     }}
                   />
                 </div>
-                <span className="w-16 shrink-0 text-right text-vigil-muted">
+                <span className="w-16 shrink-0 text-right tabular-nums text-vigil-muted">
                   {formatDuration(s.duration_ms)}
                 </span>
               </div>

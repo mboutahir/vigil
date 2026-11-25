@@ -14,13 +14,13 @@ function LegalNavigation() {
     <nav aria-label="Legal documents" className="flex flex-wrap gap-6">
       <NavLink
         to="/privacy"
-        className="hover:text-vigil-state-info-text aria-[current=page]:text-vigil-state-info-text"
+        className={({ isActive }) => isActive ? 'text-vigil-accent' : 'hover:text-vigil-accent'}
       >
         Privacy Policy
       </NavLink>
       <NavLink
         to="/terms"
-        className="hover:text-vigil-state-info-text aria-[current=page]:text-vigil-state-info-text"
+        className={({ isActive }) => isActive ? 'text-vigil-accent' : 'hover:text-vigil-accent'}
       >
         Terms of Service
       </NavLink>
@@ -53,14 +53,14 @@ export default function LegalLayout({
           <p className="mt-12 mb-2 text-xs uppercase tracking-[0.18em] text-vigil-muted">
             Vigil Observability · Legal
           </p>
-          <h1 className="mb-2 text-3xl sm:text-4xl font-semibold text-vigil-text">
+          <h1 className="mb-2 text-2xl sm:text-[32px] font-semibold text-vigil-text">
             {title}
           </h1>
           <p className="mb-4 text-sm text-vigil-muted">
             Last updated: {lastUpdated}
           </p>
           <p className="mb-3 leading-7">{intro}</p>
-          <div className="text-base leading-7 [&_h2]:mt-8 [&_h2]:mb-2 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-vigil-text [&_p]:mb-3 [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_a]:text-vigil-state-info-text [&_a:hover]:underline">
+          <div className="legal-content text-base leading-7">
             {children}
           </div>
         </article>

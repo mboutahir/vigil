@@ -3,6 +3,8 @@ import type { Period, Trace } from '../../api/tracesApi';
 import type { Range } from './GeneralFilter';
 import type { Point } from './RequestPerformance/RequestPerformance';
 
+import { severityColors } from '../shared/severityColors';
+
 export type AlertFilter = 'open' | 'critical' | 'warning';
 export type LogFilter = 'issues' | 'all';
 export type ServiceState = 'alerting' | 'silent' | 'degraded' | 'healthy';
@@ -23,13 +25,7 @@ export interface ServiceSummary {
   rate: number | null;
 }
 
-// badge colors for alert and log severities (error and critical share red)
-export const SEVERITY_CLASS: Record<string, string> = {
-  critical: 'border border-vigil-state-danger/30 bg-vigil-state-danger-text/10 text-vigil-state-danger/80',
-  error: 'border border-vigil-state-danger/30 bg-vigil-state-danger-text/10 text-vigil-state-danger/80',
-  warning: 'border border-vigil-state-warning/30 bg-vigil-state-warning-soft/10 text-vigil-state-warning/80',
-  info: 'border border-vigil-status-muted-border bg-vigil-status-muted-bg text-vigil-muted-extra',
-};
+export const SEVERITY_CLASS: Record<string, string> = severityColors;
 export const OTHER_CLASS = 'border border-vigil-border text-vigil-muted';
 
 export const STATE_COLOR: Record<

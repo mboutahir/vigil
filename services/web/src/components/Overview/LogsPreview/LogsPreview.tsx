@@ -7,7 +7,7 @@ import { Empty } from '../AlertsPreview/AlertsPreview';
 const FILTERS: LogFilter[] = ['issues', 'all'];
 
 const chip =
-  'border uppercase text-[10px] sm:text-[11px] tracking-wider h-6.5 sm:h-7.5 w-15 sm:w-17 cursor-pointer transition-[color, border-color] duration-300';
+  'border uppercase text-xs tracking-wider h-6.5 sm:h-7.5 min-w-15 px-2 cursor-pointer transition-colors duration-300';
 const chipIdle =
   'border-vigil-border text-vigil-muted hover:text-vigil-text-hover hover:border-vigil-border-hover';
 const chipActive = 'border-vigil-accent text-vigil-accent';
@@ -30,11 +30,11 @@ export default function LogsPreview({
   hasMore,
 }: Data) {
   return (
-    <div className="flex flex-col h-full min-h-0 border border-vigil-border bg-vigil-card overflow-hidden">
-      <div className="flex justify-between items-center border-b border-vigil-border px-3 sm:px-5 py-3.5 sticky bg-vigil-card z-39 top-0">
+    <div className="rounded-(--vigil-radius-panel) flex flex-col h-full min-h-0 border border-vigil-border bg-vigil-card overflow-hidden">
+      <div className="overview-card-header sticky top-0 z-39 bg-vigil-card">
         <h2 className="text-[15px] sm:text-[17px] font-medium tracking-wide">
           Logs
-          <span className="mono ms-2 text-[11px] text-vigil-muted-extra">
+          <span className="mono ms-2 text-xs text-vigil-muted-extra">
             {logs.length}
             {hasMore && '+'}
           </span>

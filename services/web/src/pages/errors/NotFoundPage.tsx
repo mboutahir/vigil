@@ -4,10 +4,10 @@ export default function NotFoundPage() {
   return (
     <div className="grid h-full min-h-64 place-items-center text-center">
       <div>
-        <p className="text-5xl font-semibold text-vigil-accent sm:text-6xl">
+        <p className="text-4xl font-semibold text-vigil-accent sm:text-[40px]">
           404
         </p>
-        <h1 className="mt-3 text-1xl font-semibold sm:text-2xl">
+        <h1 className="mt-3 text-xl font-semibold sm:text-2xl">
           Page not found
         </h1>
         <p className="mt-2 text-base text-vigil-muted">

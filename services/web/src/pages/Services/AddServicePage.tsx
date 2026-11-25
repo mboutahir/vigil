@@ -8,10 +8,10 @@ export default function AddServicePage() {
     <main className="min-h-0 flex-1 overflow-hidden px-4 md:px-8">
       <div className="mx-auto flex h-full max-w-205 flex-col">
         <div className="mb-6">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-vigil-accent">
+          <p className="text-xs uppercase tracking-[0.18em] text-vigil-accent">
             Services
           </p>
-          <h1 className="mb-2 text-[25px] font-semibold md:text-[32px]">
+          <h1 className="mb-2 text-2xl font-semibold md:text-[30px]">
             Connect a service
           </h1>
         </div>

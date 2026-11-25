@@ -37,14 +37,14 @@ export default function AlertModal(props: Data) {
 
   return (
     <div className="bg-vigil-overlay backdrop-blur-sm z-98 fixed inset-0">
-      <div className="flex flex-col bg-vigil-card border border-vigil-border w-[95%] md:w-130 h-fit max-h-[90dvh] overflow-y-auto center-absolute z-99">
+      <div className="rounded-(--vigil-radius-panel) flex flex-col bg-vigil-card border border-vigil-border w-[95%] md:w-130 h-fit max-h-[90dvh] overflow-y-auto center-absolute z-99">
         <div className="flex items-center justify-between border-b border-b-vigil-border px-6 py-3.5">
           <h1 className="text-[18px]">
             {isEdit ? 'Edit Rule' : 'Create Rule'}
           </h1>
           <button
             onClick={onClose}
-            className="text-[11px] p-2.5 outline-none border border-vigil-border cursor-pointer text-vigil-muted hover:border-vigil-text/20 hover:text-vigil-text/70 transition[border-color, color] duration-200"
+            className="text-xs p-2.5 outline-none border border-vigil-border cursor-pointer text-vigil-muted hover:border-vigil-text/20 hover:text-vigil-text/70 transition-colors duration-200"
           >
             <FontAwesomeIcon icon={faXmark} />
           </button>
@@ -156,6 +156,7 @@ export default function AlertModal(props: Data) {
           />
           <div className="flex items-center mt-5">
             <SwitchButton
+              label="Enable alert rule"
               checked={form.enabled}
               onCheckedChange={form.handleEnabledChange}
             />
@@ -173,7 +174,7 @@ export default function AlertModal(props: Data) {
           <Button
             onClick={onClose}
             value="cancel"
-            className="py-2.5! text-[13px]! text-vigil-muted! hover:border-vigil-text/20! hover:text-vigil-text/70! transition[border-color, color]! duration-200! bg-transparent! border border-vigil-border hover:opacity-100!"
+            className="py-2.5! text-[13px]! text-vigil-muted! hover:border-vigil-text/20! hover:text-vigil-text/70! transition-colors! duration-200! bg-transparent! border border-vigil-border hover:opacity-100!"
           />
           <Button
             value={isEdit ? 'save' : 'create'}
