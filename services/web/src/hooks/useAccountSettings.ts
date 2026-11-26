@@ -4,7 +4,7 @@ import { changePassword, updateEmail } from '../api/accountApi';
 import { toast } from 'sonner';
 
 const EMAIL_REGX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-const PASSWORD_REGX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+const PASSWORD_REGX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!])[^\r\n\u0085\u2028\u2029]{8,}$/u;
 
 export default function useAccountSettings() {
   const { user, setUser, apiFetch } = useAuth();
@@ -80,7 +80,7 @@ export default function useAccountSettings() {
       setNewPasswordError('Password must be 50 characters or fewer');
       isValid = false;
     } else if (!PASSWORD_REGX.test(newPassword)) {
-      setNewPasswordError('8+ chars, uppercase, lowercase, number, symbol');
+      setNewPasswordError('Use 8–50 characters, including uppercase, lowercase, a number, and one of @#$%^&+=!');
       isValid = false;
     }
 

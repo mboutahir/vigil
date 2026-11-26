@@ -8,7 +8,7 @@ import type { Role } from '../auth/authTypes';
 
 const EMAIL_REGX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
-const PASSWORD_REGX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+const PASSWORD_REGX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!])[^\r\n\u0085\u2028\u2029]{8,}$/u;
 
 type UseUsersSettingsOptions =
   | {
@@ -143,7 +143,7 @@ export default function useUsersSettings({
         setPasswordError('Password is required');
         isValid = false;
       } else if (!PASSWORD_REGX.test(password)) {
-        setPasswordError('8+ chars, uppercase, lowercase, number, symbol');
+        setPasswordError('Use 8–50 characters, including uppercase, lowercase, a number, and one of @#$%^&+=!');
         isValid = false;
       }
     }
@@ -157,7 +157,7 @@ export default function useUsersSettings({
       setPasswordError('Password must be 50 characters or fewer');
       isValid = false;
     } else if (password && !PASSWORD_REGX.test(password)) {
-      setPasswordError('8+ chars, uppercase, lowercase, number, symbol');
+      setPasswordError('Use 8–50 characters, including uppercase, lowercase, a number, and one of @#$%^&+=!');
       isValid = false;
     }
 
