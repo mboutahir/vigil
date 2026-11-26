@@ -1,7 +1,7 @@
-import type { AlertHistory } from '../api/alertHistoryApi';
+import type { AlertUpdate } from '../api/alertHistoryApi';
 import type { LlmUpdate } from '../hooks/useAlertsWebSocket';
 
-type AlertListener = (alert: AlertHistory) => void;
+type AlertListener = (alert: AlertUpdate) => void;
 type LlmListener = (data: LlmUpdate) => void;
 
 let alertListener: AlertListener | null = null;
@@ -23,7 +23,7 @@ export function subscribeToLlm(listener: LlmListener) {
   };
 }
 
-export function emitAlert(alert: AlertHistory) {
+export function emitAlert(alert: AlertUpdate) {
   alertListener?.(alert);
 }
 

@@ -39,10 +39,29 @@ export interface AlertHistory {
   version: number;
 }
 
+export type AlertStatusUpdate = Pick<AlertHistory,
+  'id' | 'status' | 'version' | 'owner_id' | 'acked_at' | 'acked_by' | 'resolved_at' | 'resolved_by'
+>;
+
+export type AlertUpdate = AlertHistory | AlertStatusUpdate;
+
+export function mergeAlert(row: AlertHistory, update: AlertUpdate) {
+  if (row.id !== update.id || update.version <= row.version) return row;
+  return { ...row, ...update };
+}
+
+export function latestAlerts(history: AlertHistory[], live: AlertHistory[]) {
+  const byId = new Map(history.map(row => [row.id, row]));
+  for (const row of live) {
+    const cached = byId.get(row.id);
+    if (!cached || row.version > cached.version) byId.set(row.id, row);
+  }
+  return [...byId.values()];
+}
+
 export interface AlertHistoryResponse {
   data: AlertHistory[];
   has_more?: boolean;
-  hasMore?: boolean; // TODO: check from new response
 }
 
 export interface AlertHistoryParams {

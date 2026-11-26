@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/authContext';
-import type { AlertHistory } from '../../api/alertHistoryApi';
+import { latestAlerts, mergeAlert, type AlertHistory, type AlertUpdate } from '../../api/alertHistoryApi';
 import AlertsFilters, {
   type Period,
 } from '../../components/Alerts/AlertsFilters';
@@ -58,67 +58,24 @@ export default function AlertsPage() {
       .map((notification) => notification.alert_history_id),
   );
 
-  const updateAlertEverywhere = useCallback(
-    (updatedAlert: AlertHistory) => {
-      updateCachedAlert(updatedAlert);
-
-      setLiveAlerts((prev) =>
-        prev.map((alert) =>
-          alert.id === updatedAlert.id ? updatedAlert : alert,
-        ),
-      );
-
-      setPendingAlerts((prev) =>
-        prev.map((alert) =>
-          alert.id === updatedAlert.id ? updatedAlert : alert,
-        ),
-      );
-    },
-    [updateCachedAlert],
-  );
-
   const handleLiveAlert = useCallback(
-    (incoming: AlertHistory) => {
-      const historical = alerts.find((alert) => alert.id === incoming.id);
-      const live = liveAlerts.find((alert) => alert.id === incoming.id);
-      const pending = pendingAlerts.find((alert) => alert.id === incoming.id);
-
-      if (historical || live || pending) {
-        const existing = [historical, live, pending].filter(
-          (alert): alert is AlertHistory => alert !== undefined,
-        );
-
-        const newestExisting = existing.reduce((newest, alert) =>
-          alert.version > newest.version ? alert : newest,
-        );
-
-        const newest =
-          incoming.version >= newestExisting.version
-            ? incoming
-            : newestExisting;
-
-        updateAlertEverywhere(newest);
-        return;
-      }
-
-      if (debouncedService && incoming.service !== debouncedService) {
-        return;
-      }
-
-      if (isNearTop) {
-        setLiveAlerts((prev) => [incoming, ...prev]);
-      } else {
-        setPendingAlerts((prev) => [incoming, ...prev]);
-      }
+    (incoming: AlertUpdate) => {
+      updateCachedAlert(incoming);
+      const isNew = 'service' in incoming &&
+        (!debouncedService || incoming.service === debouncedService) &&
+        !alerts.some(alert => alert.id === incoming.id) &&
+        !liveAlerts.some(alert => alert.id === incoming.id) &&
+        !pendingAlerts.some(alert => alert.id === incoming.id);
+      const apply = (rows: AlertHistory[], insert: boolean) => {
+        if (rows.some(row => row.id === incoming.id)) {
+          return rows.map(row => mergeAlert(row, incoming));
+        }
+        return insert && isNew ? [incoming, ...rows] : rows;
+      };
+      setLiveAlerts(rows => apply(rows, isNearTop));
+      setPendingAlerts(rows => apply(rows, !isNearTop));
     },
-    [
-      alerts,
-      liveAlerts,
-      pendingAlerts,
-      debouncedService,
-      isNearTop,
-      updateAlertEverywhere,
-    ],
+    [alerts, liveAlerts, pendingAlerts, debouncedService, isNearTop, updateCachedAlert],
   );
 
   const handleLlmUpdate = useCallback(
@@ -155,11 +112,7 @@ export default function AlertsPage() {
 
   const matchingPendingAlerts = pendingAlerts.filter(matchesServiceFilter);
 
-  const allAlerts = Array.from(
-    new Map(
-      [...alerts, ...liveAlerts].map((alert) => [alert.id, alert]),
-    ).values(),
-  )
+  const allAlerts = latestAlerts(alerts, liveAlerts)
     .filter(matchesServiceFilter)
     .sort(
       (a, b) =>

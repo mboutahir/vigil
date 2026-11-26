@@ -1,5 +1,5 @@
 import { roleBadge } from '../../shared/severityColors';
-import { faArrowRotateRight, faCircleUser } from '@fortawesome/free-solid-svg-icons';
+import { faCircleUser } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../auth/authContext';
@@ -10,10 +10,9 @@ import type { AlertsStreamStatus } from '../../../hooks/useAlertsWebSocket';
 
 interface Data {
   status: AlertsStreamStatus;
-  onRetry: () => void;
 }
 
-export default function Sidebar({ status, onRetry }: Data) {
+export default function Sidebar({ status }: Data) {
   const { user } = useAuth();
 
   return (
@@ -43,28 +42,17 @@ export default function Sidebar({ status, onRetry }: Data) {
               {
                 connecting: 'text-vigil-muted',
                 connected: 'text-vigil-success',
-                disconnected: 'text-vigil-state-danger',
+                reconnecting: 'text-vigil-warning',
               }[status]
             }
           >
             <span className="me-1 inline-block h-1.5 w-1.5 rounded-full bg-current" />
             Alerts stream {status}
-            {status === 'connecting' ? '…' : ''}
+            {status === 'connected' ? '' : '…'}
           </p>
           <span className={`client-role px-1.5 py-1 text-[11px] font-bold uppercase ${roleBadge(user?.role)}`}>
             {user?.role}
           </span>
-          {status === 'disconnected' && (
-            <button
-              type="button"
-              onClick={onRetry}
-              aria-label="Retry alerts stream connection"
-              className="col-span-full mt-1 inline-flex min-h-8 cursor-pointer items-center gap-2 justify-self-start border border-vigil-border bg-vigil-card px-2.5 text-xs font-medium text-vigil-text hover:border-vigil-accent hover:text-vigil-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vigil-accent"
-            >
-              <FontAwesomeIcon icon={faArrowRotateRight} aria-hidden="true" />
-              Retry
-            </button>
-          )}
         </div>
         <div className="flex items-center gap-2 text-xs text-vigil-muted">
           <Link

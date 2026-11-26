@@ -80,9 +80,7 @@ export default function AlertsRow(props: Data) {
       : status === 'acknowledged'
         ? acked_by
         : null;
-  const canAct =
-    alert.owner_id === null ||
-    (currentUserId !== undefined && alert.owner_id === currentUserId);
+  const canAct = alert.owner_id === null || alert.owner_id === currentUserId;
   const actions = canAct ? getActions(status) : [];
   const hasAutoOpened = useRef(false);
 

@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/authContext';
-import type { AlertHistory } from '../api/alertHistoryApi';
+import type { AlertHistory, AlertStatusUpdate } from '../api/alertHistoryApi';
 import type { AlertNotification } from '../api/alertNotificationsApi';
 
-export type AlertsStreamStatus = 'connecting' | 'connected' | 'disconnected';
+export type AlertsStreamStatus = 'connecting' | 'connected' | 'reconnecting';
 
 const MAX_RECONNECT_DELAY_MS = 30_000;
 
-type WsAlertHistory = Omit<AlertHistory, 'id'> & {
+type WsAlertHistory = (Omit<AlertHistory, 'id'> | Omit<AlertStatusUpdate, 'id'>) & {
   alert_history_id: string;
 };
 
@@ -24,14 +24,14 @@ type AlertWsFrame =
   | { type: 'error'; message: string };
 
 interface Data {
-  onAlert: (alert: AlertHistory) => void;
+  onAlert: (alert: AlertHistory | AlertStatusUpdate) => void;
   onLlm: (data: LlmUpdate) => void;
   onServerError: (message: string) => void;
   onReconnect: () => void;
   onNotification: (notification: AlertNotification) => void;
 }
 
-function normalizeWsAlert(data: WsAlertHistory): AlertHistory {
+function normalizeWsAlert(data: WsAlertHistory): AlertHistory | AlertStatusUpdate {
   const { alert_history_id, ...rest } = data;
 
   return {
@@ -49,8 +49,7 @@ export default function useAlertsWebSocket({
 }: Data) {
   const { accessToken } = useAuth();
   const [status, setStatus] = useState<AlertsStreamStatus>('connecting');
-  const [retryVersion, setRetryVersion] = useState(0);
-  const showConnectingUntil = useRef(0);
+  const needsResync = useRef(false);
   const onAlertRef = useRef(onAlert);
   const onLlmRef = useRef(onLlm);
   const onServerErrorRef = useRef(onServerError);
@@ -70,21 +69,9 @@ export default function useAlertsWebSocket({
 
     let ws: WebSocket | null = null;
     let stopped = false;
-    let statusTimer: number | undefined;
     let reconnectTimer: number | undefined;
     let attempts = 0;
 
-    const showResult = (result: 'connected' | 'disconnected') => {
-      window.clearTimeout(statusTimer);
-      const remaining = showConnectingUntil.current - Date.now();
-
-      if (remaining <= 0) {
-        setStatus(result);
-        return;
-      }
-
-      statusTimer = window.setTimeout(() => setStatus(result), remaining);
-    };
     const connect = () => {
       ws = new WebSocket(
         `/api/alerts/ws?token=${encodeURIComponent(accessToken)}`,
@@ -93,14 +80,15 @@ export default function useAlertsWebSocket({
       ws.onopen = () => {
         if (stopped) return;
         attempts = 0;
-        showResult('connected');
-        onReconnectRef.current();
+        setStatus('connected');
+        if (needsResync.current) onReconnectRef.current();
+        needsResync.current = false;
       };
 
       ws.onclose = () => {
         if (stopped) return;
-        showResult('disconnected');
-        // Retry after 1s, 2s, 4s... up to 30s, so a restarted API is picked up without a click.
+        needsResync.current = true;
+        setStatus('reconnecting');
         const delay = Math.min(MAX_RECONNECT_DELAY_MS, 1000 * 2 ** attempts);
         attempts += 1;
         reconnectTimer = window.setTimeout(connect, delay);
@@ -136,24 +124,12 @@ export default function useAlertsWebSocket({
     connect();
 
     return () => {
+      if (ws?.readyState === WebSocket.OPEN) needsResync.current = true;
       stopped = true;
-      window.clearTimeout(statusTimer);
       window.clearTimeout(reconnectTimer);
       ws?.close();
     };
-  }, [accessToken, retryVersion]);
+  }, [accessToken]);
 
-  const retry = () => {
-    if (!accessToken || status != 'disconnected') return;
-
-    showConnectingUntil.current = Date.now() + 1000;
-    setStatus('connecting');
-    setRetryVersion((current) => current + 1);
-  };
-
-  return {
-    isConnected: status === 'connected',
-    status,
-    retry,
-  };
+  return status;
 }

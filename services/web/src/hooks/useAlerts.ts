@@ -8,7 +8,8 @@ import type { ApiFetch } from '../api/api';
 import {
   getAlertHistory,
   updateAlertStatus,
-  type AlertHistory,
+  mergeAlert,
+  type AlertUpdate,
   type AlertHistoryParams,
   type AlertHistoryResponse,
   type AlertStatus,
@@ -49,7 +50,7 @@ export default function useAlerts({
     staleTime: 5 * 60_000,
 
     getNextPageParam: (lastPage) => {
-      const hasMore = lastPage.has_more ?? lastPage.hasMore;
+      const hasMore = lastPage.has_more;
       if (!hasMore) {
         return undefined;
       }
@@ -75,7 +76,7 @@ export default function useAlerts({
     },
   });
 
-  const updateCachedAlert = (incoming: AlertHistory) => {
+  const updateCachedAlert = (incoming: AlertUpdate) => {
     queryClient.setQueryData<InfiniteData<AlertHistoryResponse>>(
       ['alert-history', period, service, pageSize, before],
       (oldData) => {
@@ -84,11 +85,7 @@ export default function useAlerts({
           ...oldData,
           pages: oldData.pages.map((page) => ({
             ...page,
-            data: page.data.map((alert) => {
-              if (alert.id !== incoming.id) return alert;
-              if (incoming.version <= alert.version) return alert;
-              return incoming;
-            }),
+            data: page.data.map(alert => mergeAlert(alert, incoming)),
           })),
         };
       },

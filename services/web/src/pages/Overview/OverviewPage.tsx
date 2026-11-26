@@ -33,7 +33,7 @@ import {
   subscribeToAlerts,
   subscribeToLlm,
 } from '../../realtime/alertsRealtime';
-import type { AlertHistory } from '../../api/alertHistoryApi';
+import { latestAlerts, mergeAlert, type AlertHistory, type AlertUpdate } from '../../api/alertHistoryApi';
 import type { Log } from '../../api/logsApi';
 import type { LiveLogsStatus } from '../Logs/LogsPage';
 
@@ -136,26 +136,17 @@ export default function OverviewPage() {
     fetchMoreAlerts();
   }, [alertsHasMore, alertsFetchingMore, alerts.length, fetchMoreAlerts]);
 
-  // websocket "alert" frames: a status change (ack/resolve/reopen) of a known alert,
-  // or a brand new alert. status frames carry no version, so the cached one is bumped by 1
-  // like the server does, and the next refetch replaces it with the real row
   const handleLiveAlert = useCallback(
-    (incoming: AlertHistory) => {
-      const cached = alerts.find((a) => a.id === incoming.id);
-      if (cached) {
-        updateCachedAlert({
-          ...cached,
-          ...incoming,
-          version: incoming.version ?? cached.version + 1,
-        });
-        return;
-      }
-      setLiveAlerts((prev) => {
-        const index = prev.findIndex((a) => a.id === incoming.id);
-        if (index === -1) return incoming.service ? [incoming, ...prev] : prev;
-        const next = [...prev];
-        next[index] = { ...prev[index], ...incoming };
-        return next;
+    (incoming: AlertUpdate) => {
+      updateCachedAlert(incoming);
+      setLiveAlerts(rows => {
+        if (rows.some(row => row.id === incoming.id)) {
+          return rows.map(row => mergeAlert(row, incoming));
+        }
+        if ('service' in incoming && !alerts.some(row => row.id === incoming.id)) {
+          return [incoming, ...rows];
+        }
+        return rows;
       });
     },
     [alerts, updateCachedAlert],
@@ -180,11 +171,9 @@ export default function OverviewPage() {
 
   // every alert of the range, fetched + live, without duplicates
   const rangeAlerts = useMemo(() => {
-    const byId = new Map<string, AlertHistory>();
-    for (const a of [...alerts, ...liveAlerts])
-      if (!byId.has(a.id) && (range === 'all' || inWindow(timeWindow, a.triggered_at)))
-        byId.set(a.id, a);
-    return [...byId.values()];
+    return latestAlerts(alerts, liveAlerts).filter(
+      alert => range === 'all' || inWindow(timeWindow, alert.triggered_at),
+    );
   }, [alerts, liveAlerts, timeWindow, range]);
 
   const shownAlerts = useMemo(

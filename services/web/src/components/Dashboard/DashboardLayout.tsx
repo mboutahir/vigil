@@ -85,8 +85,13 @@ function DashboardContent() {
     }
   };
 
-  const { status, retry } = useAlertsWebSocket({
+  const status = useAlertsWebSocket({
     onAlert: (alert) => {
+      queryClient.invalidateQueries({
+        queryKey: ['alert-history'],
+        type: 'inactive',
+        refetchType: 'none',
+      });
       emitAlert(alert);
     },
 
@@ -135,10 +140,9 @@ function DashboardContent() {
 
   return (
     <div className="dashboard-layout flex h-dvh overflow-hidden">
-      <DesktopSidebar status={status} onRetry={retry} />
+      <DesktopSidebar status={status} />
       <MobileSidebar
         status={status}
-        onRetry={retry}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />

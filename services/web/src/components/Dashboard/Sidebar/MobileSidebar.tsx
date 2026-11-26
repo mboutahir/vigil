@@ -5,14 +5,12 @@ interface Data {
   isOpen: boolean;
   onClose: () => void;
   status: AlertsStreamStatus;
-  onRetry: () => void;
 }
 
 export default function MobileSidebar({
   isOpen,
   onClose,
   status,
-  onRetry,
 }: Data) {
   return (
     <>
@@ -25,7 +23,7 @@ export default function MobileSidebar({
       <aside
         className={`fixed z-50 inset-y-0 left-0 h-screen transition-transform duration-300 lg:hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <Sidebar status={status} onRetry={onRetry} />
+        <Sidebar status={status} />
       </aside>
     </>
   );
