@@ -59,7 +59,7 @@ export default function useAlertRuleForm({
     isEdit ? rule.signal_type : ('logs' as SignalType),
   );
   const [metricName, setMetricName] = useState(
-    isEdit ? rule.metric_name : METRIC_NAMES.logs[0],
+    isEdit ? rule.metric_name : '',
   );
   const [metricNameError, setMetricNameError] = useState('');
   const [aggregation, setAggregation] = useState<Aggregation>(
@@ -147,9 +147,7 @@ export default function useAlertRuleForm({
     if (isEdit) return;
     const next = e.target.value as SignalType;
     setSignalType(next);
-    setMetricName(
-      next === 'metrics' ? '' : METRIC_NAMES[next as 'logs' | 'traces'][0],
-    );
+    setMetricName('');
     setAggregation('latest' as Aggregation);
     setMetricNameError('');
     setFormError('');
