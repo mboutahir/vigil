@@ -114,10 +114,13 @@
     background: var(--vigil-scrollbar-hover)
 }
 
-@supports not selector(::-webkit-scrollbar) {
+@supports (-moz-appearance: none) {
     :root {
-        scrollbar-width: thin;
-        scrollbar-color: var(--vigil-scrollbar) transparent;
+        scrollbar-color: var(--vigil-scrollbar-hover) var(--vigil-surface);
+    }
+
+    .overflow-y-auto {
+        scrollbar-gutter: stable;
     }
 }
 
