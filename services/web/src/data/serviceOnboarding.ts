@@ -164,12 +164,8 @@ export function exporterConfig(
       );
     }
   }
-  const host = new URL(endpoint).hostname;
-  if (host === 'vigil.localhost' || host === 'host.docker.internal') {
-    lines.push(
-      '    extra_hosts:',
-      '      - ' + composeString(host + ':host-gateway'),
-    );
+  if (new URL(endpoint).hostname === 'vigil-ingest') {
+    lines.push('    networks:', '      - default', '      - vigil-ingest');
   }
   return lines.join('\n');
 }

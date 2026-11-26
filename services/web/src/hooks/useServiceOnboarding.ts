@@ -9,15 +9,16 @@ import { getApiKeys } from '../api/apiKeyApi';
 import type { ApiFetch } from '../api/api';
 import { getTlsCa } from '../api/serviceOnboardingApi';
 
-// vigil's address as seen from the service: same port as this page, and vigil.localhost from inside docker
+// Local containers connect directly to Caddy on its shared network.
 function vigilAddress(format: ExporterFormat) {
   const url = new URL(
     window.location.protocol === 'https:'
       ? window.location.origin
       : 'https://localhost:8443',
   );
-  if (format === 'compose' && url.hostname === 'localhost')
-    url.hostname = 'vigil.localhost';
+  if (format === 'compose' && ['localhost', '127.0.0.1', '[::1]', 'vigil.localhost', 'host.docker.internal'].includes(url.hostname)) {
+    return 'https://vigil-ingest';
+  }
   return url.origin;
 }
 
