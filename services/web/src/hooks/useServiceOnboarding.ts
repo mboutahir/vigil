@@ -9,24 +9,11 @@ import { getApiKeys } from '../api/apiKeyApi';
 import type { ApiFetch } from '../api/api';
 import { getTlsCa } from '../api/serviceOnboardingApi';
 
-// Local containers connect directly to Caddy on its shared network.
-function vigilAddress(format: ExporterFormat) {
-  const url = new URL(
-    window.location.protocol === 'https:'
-      ? window.location.origin
-      : 'https://localhost:8443',
-  );
-  if (format === 'compose' && ['localhost', '127.0.0.1', '[::1]', 'vigil.localhost', 'host.docker.internal'].includes(url.hostname)) {
-    return 'https://vigil-ingest';
-  }
-  return url.origin;
-}
-
 export default function useServiceOnboarding(apiFetch: ApiFetch) {
   const queryClient = useQueryClient();
   const [step, setStep] = useState<OnboardingStep>(1);
   const [serviceName, setServiceName] = useState('');
-  const [format, updateFormat] = useState<ExporterFormat>('compose');
+  const [format, setFormat] = useState<ExporterFormat>('compose');
   const [existing, setExisting] = useState(false);
   const [language, setLanguage] = useState<ServiceLanguage | ''>('');
   const [legacyPythonSdk, setLegacyPythonSdk] = useState(false);
@@ -63,15 +50,14 @@ export default function useServiceOnboarding(apiFetch: ApiFetch) {
     },
   });
 
-  // vigil runs on this machine behind caddy's local CA, so services always need to trust that CA
-  const localTls = true;
-  const endpoint = `${vigilAddress(format)}/otlp`;
+  const port = window.location.protocol === 'https:' ? window.location.port : '8443';
+  const endpoint = `https://localhost${port ? ':' + port : ''}/otlp`;
   const ingestionKey = keys.data?.ingestion_key ?? '';
   const canInstall =
     Boolean(language) && (language !== 'java' || Boolean(agentPath.trim()));
   const canConfigure =
     (existing || canInstall) &&
-    (!localTls || caPath.startsWith('/')) &&
+    caPath.startsWith('/') &&
     Boolean(ingestionKey) &&
     !keys.isError;
 
@@ -95,13 +81,12 @@ export default function useServiceOnboarding(apiFetch: ApiFetch) {
     },
     serviceName,
     setServiceName,
-    localTls,
     endpoint,
     keys,
     ingestionKey,
     download,
     format,
-    setFormat: updateFormat,
+    setFormat,
     privateCaMount,
     setPrivateCaMount,
     existing,

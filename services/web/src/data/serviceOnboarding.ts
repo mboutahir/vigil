@@ -69,7 +69,6 @@ interface ExporterSettings {
   language: ServiceLanguage | '';
   legacyPythonSdk: boolean;
   existing: boolean;
-  localTls: boolean;
   privateCaMount: boolean;
   caPath: string;
   agentPath: string;
@@ -92,7 +91,6 @@ export function exporterConfig(
     ingestionKey,
     language,
     existing,
-    localTls,
     caPath,
     agentPath,
   } = settings;
@@ -119,7 +117,7 @@ export function exporterConfig(
         '--require @opentelemetry/auto-instrumentations-node/register';
   }
   const caEnv = existing ? 'OTEL_EXPORTER_OTLP_CERTIFICATE' : guide?.caEnv;
-  if (localTls && caEnv) env[caEnv] = caPath;
+  if (caEnv) env[caEnv] = caPath;
 
   if (format === 'bash') {
     return Object.entries(env)
@@ -133,7 +131,7 @@ export function exporterConfig(
       .join('\n');
   }
 
-  const lines = ['    environment:'];
+  const lines = ['    network_mode: host', '    environment:'];
   for (const [name, value] of Object.entries(env)) {
     const yaml =
       name === 'OTEL_EXPORTER_OTLP_HEADERS'
@@ -141,31 +139,26 @@ export function exporterConfig(
         : composeString(value);
     lines.push(`      ${name}: ${yaml}`);
   }
-  if (localTls) {
-    lines.push('    volumes:');
-    if (caPath.includes(':')) {
-      lines.push(
-        '      - type: bind',
-        '        source: ./certs/vigil-ca.crt',
-        `        target: ${composeString(caPath)}`,
-        '        read_only: true',
-        ...(settings.privateCaMount
-          ? ['        bind:', '          selinux: Z']
-          : []),
-      );
-    } else {
-      lines.push(
-        '      - ' +
-          composeString(
-            './certs/vigil-ca.crt:' +
-              caPath +
-              (settings.privateCaMount ? ':ro,Z' : ':ro'),
-          ),
-      );
-    }
-  }
-  if (new URL(endpoint).hostname === 'vigil-ingest') {
-    lines.push('    networks:', '      - default', '      - vigil-ingest');
+  lines.push('    volumes:');
+  if (caPath.includes(':')) {
+    lines.push(
+      '      - type: bind',
+      '        source: ./certs/vigil-ca.crt',
+      `        target: ${composeString(caPath)}`,
+      '        read_only: true',
+      ...(settings.privateCaMount
+        ? ['        bind:', '          selinux: Z']
+        : []),
+    );
+  } else {
+    lines.push(
+      '      - ' +
+        composeString(
+          './certs/vigil-ca.crt:' +
+            caPath +
+            (settings.privateCaMount ? ':ro,Z' : ':ro'),
+        ),
+    );
   }
   return lines.join('\n');
 }

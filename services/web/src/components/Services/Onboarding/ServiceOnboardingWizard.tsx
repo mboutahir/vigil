@@ -51,7 +51,7 @@ function Wizard({ onExit, firstStepActionLabel, onAddAnother }: Data) {
             compose={flow.format === 'compose'}
             launch={guide?.launch}
             onAddAnother={onAddAnother ?? onExit}
-            reachabilityCommand={`curl -v --connect-timeout 5 --max-time 10${flow.localTls ? ' --cacert ' + shellQuote(flow.caPath) : ''} ${shellQuote(flow.endpoint + '/v1/logs')}`}
+            reachabilityCommand={`curl -v --connect-timeout 5 --max-time 10 --cacert ${shellQuote(flow.caPath)} ${shellQuote(flow.endpoint + '/v1/logs')}`}
           />
         )}
         <div className="mt-5 flex shrink-0 items-center justify-between gap-2">

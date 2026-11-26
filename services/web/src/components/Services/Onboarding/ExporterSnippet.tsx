@@ -21,15 +21,11 @@ export default function ExporterSnippet({ flow }: Data) {
         label={compose ? 'docker-compose.yml' : 'Bash'}
         code={exporterConfig(flow, format)}
       />
-      {compose && new URL(flow.endpoint).hostname === 'vigil-ingest' && (
-        <>
-          <p className="mt-2 text-vigil-muted">
-            Start Vigil on the same Docker engine first. Keep your service’s existing
-            networks and add vigil-ingest. Merge this declaration at the top level
-            of your Compose file.
-          </p>
-          <CodeSnippet label="Compose networks" code={'networks:\n  vigil-ingest:\n    external: true'} />
-        </>
+      {compose && (
+        <p className="mt-2 text-vigil-muted">
+          Host networking lets this service reach Vigil on localhost. Remove any
+          networks and ports entries from this service. It uses the host ports directly.
+        </p>
       )}
       {compose && (
         <div className="mt-3 space-y-2 text-[13px] text-vigil-muted">
