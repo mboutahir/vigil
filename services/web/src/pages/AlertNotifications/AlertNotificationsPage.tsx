@@ -75,7 +75,7 @@ export default function AlertNotificationsPage() {
         onClick={() => setIsOpen((prev) => !prev)}
       />
       {isOpen && (
-        <div className="fixed left-3 right-3 top-16 z-99 max-h-[calc(100dvh-5rem)] overflow-y-auto sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-90 sm:max-h-[70vh] bg-vigil-panel">
+        <div className="fixed left-3 right-3 top-16 z-99 max-h-[calc(100dvh-5rem)] overflow-y-auto sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-90 sm:max-h-[70vh] rounded-b-none bg-vigil-panel">
           <AlertNotificationsHeader unseenCount={unseenCount} />
           <AlertNotificationsTabs tab={tab} onChange={setTab} />
           <div className="max-h-95 overflow-y-auto">

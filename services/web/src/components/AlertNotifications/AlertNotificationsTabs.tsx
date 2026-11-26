@@ -18,7 +18,7 @@ export default function AlertNotificationsTabs({ tab, onChange }: Data) {
           key={value}
           type="button"
           onClick={() => onChange(value)}
-          className={`-mb-px cursor-pointer border-b-2 py-2 text-[.8rem] transition-colors ${
+          className={`-mb-px cursor-pointer rounded-none border-b-2 py-2 text-[.8rem] transition-colors ${
             tab === value
               ? 'border-vigil-accent text-vigil-text'
               : 'border-transparent text-vigil-muted-extra hover:text-vigil-text'

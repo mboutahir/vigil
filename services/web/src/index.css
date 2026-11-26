@@ -347,18 +347,19 @@ h1, h2, h3,
 }
 
 /* Toaster */
+@media (min-width: 601px) {
+    [data-sonner-toaster].vigil-toaster {
+        width: min(32rem, calc(100vw - 32px));
+    }
+}
 
 .vigil-toast {
     --accent: var(--vigil-accent);
-    position: relative;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
-    column-gap: 12px;
-    row-gap: 2px;
+    display: flex;
     align-items: center;
-    width: min(420px, calc(100vw - 32px));
-    padding: 14px 16px;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
     background: var(--vigil-toast-bg);
     border: 1px solid var(--vigil-toast-border);
     border-radius: var(--vigil-radius-panel);
@@ -384,8 +385,7 @@ h1, h2, h3,
 }
 
 .vigil-toast-icon {
-    grid-column: 1;
-    grid-row: 1 / 3;
+    flex-shrink: 0;
     display: grid;
     place-items: center;
     width: 28px;
@@ -395,42 +395,36 @@ h1, h2, h3,
     color: var(--accent);
 }
 
-.vigil-toast-title {
-    grid-column: 2;
-    grid-row: 1;
+.vigil-toast-content {
+    flex: 1;
     min-width: 0;
-    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.vigil-toast-title {
+    font-family: "Space Grotesk", sans-serif;
+    min-width: 0;
+    font-size: 14px;
     font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.35;
 }
 
 .vigil-toast-desc {
-    grid-column: 2;
-    grid-row: 2;
-    min-width: 0;
-    font-size: 12px;
-    color: var(--vigil-text-dim);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--vigil-muted);
+    line-height: 1.4;
 }
 
 .vigil-toast-action {
-    grid-column: 3;
-    grid-row: 1 / 3;
-    padding: 6px 12px;
-    background: var(--accent);
-    color: var(--vigil-toast-on-action);
-    border: 0;
+    flex-shrink: 0;
+    padding: 5px 10px;
+    background: var(--vigil-accent-soft);
+    color: var(--vigil-accent);
+    border: 1px solid var(--vigil-accent-border-hover);
     border-radius: var(--vigil-radius-control);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-size: 13px;
+    font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
 }
@@ -447,6 +441,8 @@ h1, h2, h3,
 }
 
 .vigil-toast-close {
+    order: 1;
+    flex-shrink: 0;
     width: 28px;
     height: 28px;
     display: flex;
