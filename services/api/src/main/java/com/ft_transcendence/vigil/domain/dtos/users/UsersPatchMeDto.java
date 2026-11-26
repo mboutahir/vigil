@@ -9,6 +9,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UsersPatchMeDto {
+    @Size(min = 1, message = "email cannot be empty")
+    @Pattern(regexp = "^\\S+@\\S+\\.\\S+$", message = "email must be valid")
     @Email(message="you must enter a valid email")
     private String email;
     @Size(max = 50)
