@@ -41,7 +41,7 @@
 }
 
 # self-hosted: every name is signed by caddy's local CA
-localhost, vigil.localhost, host.docker.internal {
+localhost, vigil.localhost, host.docker.internal, vigil-ingest {
 	tls internal
 	import vigil-routes
 }

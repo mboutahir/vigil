@@ -18,7 +18,9 @@ services:
         condition: service_started
       waf: {condition: service_healthy}
     networks:
-      - default
+      default: {}
+      vigil-ingest:
+        aliases: [vigil-ingest]
     restart: unless-stopped
 
   ollama:
@@ -368,4 +370,6 @@ volumes:
   vault_clickhouse_secrets: {}
   vault_collector_secrets: {}
 networks:
+  vigil-ingest:
+    name: vigil-ingest
   vault_internal: {internal: true}
