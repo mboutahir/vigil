@@ -1,3 +1,5 @@
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useAIDrawer } from '../../../hooks/useAIDrawer';
 import { useAlertAsk } from '../../../hooks/useAlertAsk';
@@ -98,14 +100,15 @@ export default function AIPanel({ onClose }: AIPanelProps) {
 
   return (
     <div className="ai-panel z-50 flex flex-col space-y-4 h-screen">
-      <div className="header px-3 py-4.5 md:py-6 flex justify-between border-b border-b-vigil-border mb-0">
+      <div className="header px-3 py-4.5 md:py-6 flex items-center justify-between border-b border-b-vigil-border mb-0">
         <p className="font-medium tracking-wide">✦ AI assistant</p>
         <button
           type="button"
           onClick={handleClose}
-          className="uppercase border border-vigil-muted-divider text-xs tracking-widest px-2 text-vigil-muted cursor-pointer hover:opacity-70 duration-300 transition-opacity"
+          aria-label="Close AI assistant"
+          className="grid size-8 cursor-pointer place-items-center border border-vigil-border text-sm text-vigil-muted hover:border-vigil-border-hover hover:text-vigil-text"
         >
-          Close
+          <FontAwesomeIcon icon={faXmark} />
         </button>
       </div>
       <div className="body p-3 flex-1 border-b mb-0 border-b-vigil-muted-divider space-y-2.5 overflow-y-auto">
