@@ -316,6 +316,7 @@ public class AlertsService {
         if (status == Status.resolved) {
             if (alertHistory.getUser() != null && !user.getId().equals(alertHistory.getUser().getId()))
                 throw new ForbiddenException("not the acknowledging user");
+            alertHistory.setUser(user);
             alertHistory.setResolvedAt(Instant.now());
             alertHistory.setResolvedBy(user.getEmail());
             alertHistory.setStatus(status);
