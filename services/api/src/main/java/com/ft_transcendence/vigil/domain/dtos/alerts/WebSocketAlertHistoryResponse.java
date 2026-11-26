@@ -21,6 +21,7 @@ public class WebSocketAlertHistoryResponse {
             String ackedBy,
             Instant resolvedAt,
             String resolvedBy,
-            Long version)
+            Long version,
+            UUID ownerId)
     {}
 }

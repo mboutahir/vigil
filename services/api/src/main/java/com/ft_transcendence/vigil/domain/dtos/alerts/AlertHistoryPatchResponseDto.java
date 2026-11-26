@@ -15,6 +15,7 @@ import java.util.UUID;
 @Builder
 public class AlertHistoryPatchResponseDto {
     private UUID id;
+    private UUID ownerId;
     private AlertRules rule;
     private String service;
     private Instant triggeredAt;

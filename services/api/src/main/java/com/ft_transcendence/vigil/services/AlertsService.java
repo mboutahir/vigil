@@ -323,6 +323,7 @@ public class AlertsService {
         alertHistory = alertHistoryRepository.saveAndFlush(alertHistory);
         AlertHistoryPatchResponseDto responseDto = AlertHistoryPatchResponseDto.builder().
                 id(alertHistoryId).
+                ownerId(alertHistory.getUser() == null ? null : alertHistory.getUser().getId()).
                 rule(alertHistory.getRule()).
                 service(alertHistory.getService()).
                 triggeredAt(alertHistory.getTriggeredAt()).
@@ -349,7 +350,8 @@ public class AlertsService {
                         responseDto.getAckedBy(),
                         responseDto.getResolvedAt(),
                         responseDto.getResolvedBy(),
-                        responseDto.getVersion()))
+                        responseDto.getVersion(),
+                        responseDto.getOwnerId()))
                 .build());
         return responseDto;
 
