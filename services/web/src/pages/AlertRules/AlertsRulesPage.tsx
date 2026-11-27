@@ -109,11 +109,11 @@ export default function AlertsRulesPage() {
               !alertRulesQuery.isError &&
               rules.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={9}
-                    className="py-6 text-center text-vigil-muted"
-                  >
-                    No alert rules.
+                  <td colSpan={9} className="py-15 text-center">
+                    <h1 className="mb-1 text-[20px]">No alert rules found</h1>
+                    <p className="text-[14px] tracking-wider text-vigil-muted">
+                      Create a rule to start receiving alerts.
+                    </p>
                   </td>
                 </tr>
               )}
