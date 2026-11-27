@@ -24,6 +24,13 @@ const PAGE_SIZE = 20;
 export const alertNotificationsKey = (userId: string) =>
   ['alert-notifications', userId] as const;
 
+export function countUnseenNotifications(data: InfiniteData<AlertNotificationsResponse>) {
+  return data.pages.reduce(
+    (total, page) => total + page.notifications.filter((item) => !item.seen).length,
+    0,
+  );
+}
+
 export const updateAlertNotificationCache = (
   queryClient: QueryClient,
   userId: string,
@@ -141,6 +148,7 @@ export default function useAlertNotifications({ apiFetch, userId }: Data) {
 
   return {
     notifications,
+    unseenCount: notificationsQuery.data ? countUnseenNotifications(notificationsQuery.data) : 0,
     isLoading: notificationsQuery.isLoading,
     isError: notificationsQuery.isError,
     error: notificationsQuery.error,

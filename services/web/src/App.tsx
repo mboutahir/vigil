@@ -1,5 +1,8 @@
 import './index.css';
 import { useEffect } from 'react';
+import { skipToken, useQuery } from '@tanstack/react-query';
+import { useAuth } from './auth/authContext';
+import { alertNotificationsKey, countUnseenNotifications } from './hooks/useAlertNotifications';
 import { getTabTitle } from './components/Dashboard/Sidebar/dashboardNavigation';
 import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import LoginPage from './pages/Login/LoginPage';
@@ -31,9 +34,17 @@ import NotFoundPage from './pages/errors/NotFoundPage';
 
 function App() {
   const { pathname } = useLocation();
+  const { user } = useAuth();
+  const { data: unseenCount = 0 } = useQuery({
+    queryKey: alertNotificationsKey(user?.id ?? ''),
+    queryFn: skipToken,
+    select: countUnseenNotifications,
+  });
+
   useEffect(() => {
-    document.title = getTabTitle(pathname);
-  }, [pathname]);
+    const title = getTabTitle(pathname);
+    document.title = unseenCount ? `(${unseenCount}) ${title}` : title;
+  }, [pathname, unseenCount]);
 
   const [searchParams] = useSearchParams();
   const targetAlertId = searchParams.get('alert');

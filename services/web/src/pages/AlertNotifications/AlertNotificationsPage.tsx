@@ -17,6 +17,7 @@ export default function AlertNotificationsPage() {
   const [tab, setTab] = useState<Tab>('all');
   const {
     notifications,
+    unseenCount,
     isLoading,
     isError,
     error,
@@ -26,9 +27,6 @@ export default function AlertNotificationsPage() {
     updateSeen,
     updatingNotificationId,
   } = useAlertNotifications({ apiFetch, userId: user!.id });
-  const unseenCount = notifications.filter(
-    (notification) => !notification.seen,
-  ).length;
   const visibleNotifications =
     tab === 'unseen'
       ? notifications.filter((notification) => !notification.seen)
