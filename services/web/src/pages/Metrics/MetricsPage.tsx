@@ -1,3 +1,4 @@
+import { useLivePreference } from '../../hooks/useLivePreference';
 //hooks
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -28,7 +29,7 @@ export default function MetricsPage() {
   const [period, setPeriod] = useState<Period>('24h');
   //links like /metrics?service=api open already filtered, only read once on the first render
   const [service, setService] = useState(searchParams.get('service') ?? '');
-  const [live, setLive] = useState(false);
+  const { live, toggleLive } = useLivePreference('metrics');
   //the open row is kept here and not in the url like traces because the key is long and ugly and nothing links to a metric point
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[] | null>(null);
@@ -122,7 +123,7 @@ export default function MetricsPage() {
         isExporting={isExporting}
         onPeriodChange={setPeriod}
         onServiceChange={setService}
-        onLiveChange={() => setLive((prev) => !prev)}
+        onLiveChange={toggleLive}
         onExport={() => exportCsv()}
       />
 
@@ -187,7 +188,7 @@ export default function MetricsPage() {
         error={error}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
-        onLoadMore={() => fetchNextPage()}
+        onLoadMore={fetchNextPage}
         onSelect={selectMetric}
       />
     </div>

@@ -1,3 +1,5 @@
+import InfiniteScrollRow from '../../components/shared/InfiniteScrollRow';
+import { useLivePreference } from '../../hooks/useLivePreference';
 import { useEffect, useRef, useState } from 'react';
 import LogsFilters from '../../components/Logs/LogsFilters';
 import LogsRow, { type LogsSeverity } from '../../components/Logs/LogsRow';
@@ -12,9 +14,8 @@ import Button from '../../components/shared/Button';
 export type LiveLogsStatus = 'paused' | 'connecting...' | 'live';
 
 export default function LogsPage() {
-  const loadMoreRef = useRef<HTMLTableRowElement | null>(null);
   const filter = useLogsFilter();
-  const [isLive, setIsLive] = useState(false);
+  const { live: isLive, toggleLive, pauseLive } = useLivePreference('logs');
   const topRef = useRef<HTMLDivElement | null>(null);
   const [isNearTop, setIsNearTop] = useState(true);
   const [liveLogs, setLiveLogs] = useState<Log[]>([]);
@@ -57,7 +58,7 @@ export default function LogsPage() {
     severity: filter.severity as LogsSeverity,
     enabled: isLive,
     onLog: handleLiveLog,
-    onError: () => setIsLive(false),
+    onError: pauseLive,
     setConnectionStatus,
   });
 
@@ -161,22 +162,6 @@ export default function LogsPage() {
     return () => observer.disconnect();
   }, [pendingLogs]);
 
-  useEffect(() => {
-    const target = loadMoreRef.current;
-
-    if (!target) return;
-    const observer = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-
-      if (entry.isIntersecting && hasMore && !isFetchingNextPage) {
-        fetchNextPage();
-      }
-    });
-    observer.observe(target);
-
-    return () => observer.disconnect();
-  }, [hasMore, isFetchingNextPage, fetchNextPage]);
-
   return (
     <>
       {pendingLogs.length > 0 && (
@@ -191,7 +176,7 @@ export default function LogsPage() {
           <SwitchButton
             label="Live logs"
             checked={isLive}
-            onCheckedChange={() => setIsLive((prev) => !prev)}
+            onCheckedChange={toggleLive}
           />
           <span className="font-heading text-lg font-medium text-vigil-muted capitalize">
             {connectionStatus}
@@ -289,18 +274,12 @@ export default function LogsPage() {
                 );
               })}
             {!isLoading && !isError && allLogs.length > 0 && (
-              <tr ref={loadMoreRef}>
-                <td
-                  colSpan={4}
-                  className="text-center text-vigil-muted-extra py-2.5"
-                >
-                  {isFetchingNextPage
-                    ? 'Loading more...'
-                    : hasMore
-                      ? ''
-                      : '- end of results -'}
-                </td>
-              </tr>
+              <InfiniteScrollRow
+                colSpan={4}
+                hasMore={hasMore}
+                loading={isFetchingNextPage}
+                onLoadMore={fetchNextPage}
+              />
             )}
           </tbody>
         </table>

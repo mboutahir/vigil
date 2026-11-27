@@ -1,3 +1,4 @@
+import { useLivePreference } from '../../hooks/useLivePreference';
 
 //hooks
 import { useCallback, useMemo, useState } from 'react';
@@ -22,7 +23,7 @@ export default function TracesPage() {
   const [period, setPeriod] = useState<Period>('1h');
   //links like /traces?service=api open already filtered, only read once on the first render
   const [service, setService] = useState(searchParams.get('service') ?? '');
-  const [live, setLive] = useState(false);
+  const { live, toggleLive } = useLivePreference('traces');
   //we get the trace id and span id
   const selectedTraceId = searchParams.get('trace_id');
   const selectedSpanId = searchParams.get('span_id');
@@ -108,7 +109,7 @@ export default function TracesPage() {
         isExporting={isExporting}
         onPeriodChange={setPeriod}
         onServiceChange={setService}
-        onLiveChange={() => setLive((prev) => !prev)}
+        onLiveChange={toggleLive}
         onExport={() => exportCsv()}
       />
       <TracesTable
@@ -118,7 +119,7 @@ export default function TracesPage() {
         error={error}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
-        onLoadMore={() => fetchNextPage()}
+        onLoadMore={fetchNextPage}
         onSelect={selectSpan}
       />
     </div>

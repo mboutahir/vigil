@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { clearLivePreferences } from '../hooks/useLivePreference';
 import { AuthContext } from './authContext';
 import {
   getCurrentUser,
@@ -35,6 +36,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   const [authCheckError, setAuthCheckError] = useState(false);
 
   const clearAuthState = useCallback((): void => {
+    clearLivePreferences();
     setAccessToken(null);
     setUser(null);
     queryClient.clear();

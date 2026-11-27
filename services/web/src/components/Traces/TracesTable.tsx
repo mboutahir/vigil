@@ -1,3 +1,4 @@
+import InfiniteScrollRow from '../shared/InfiniteScrollRow';
 import type { Trace } from '../../api/tracesApi';
 import TracesRow from './TracesRow';
 
@@ -58,15 +59,22 @@ export default function TracesTable({
             <tr>
               <td colSpan={6} className="py-6 text-center text-vigil-state-danger-text">
                 {error.message}
+                {hasNextPage && (
+                  <button type="button" onClick={onLoadMore} className="ml-3 underline">
+                    Retry
+                  </button>
+                )}
               </td>
             </tr>
           )}
           {/* if not loading and no errror and no traces  */}
           {!isLoading && !error && traces.length === 0 && (
             <tr>
-              <td colSpan={6} className="py-6 text-center text-vigil-muted">
-                No traces match these filters. Try a wider period or clear the
-                service filter.
+              <td colSpan={6} className="py-15 text-center">
+                <h1 className="mb-1 text-[20px]">No traces found</h1>
+                <p className="text-[14px] tracking-wider text-vigil-muted">
+                  Try a wider period or clear the service filter.
+                </p>
               </td>
             </tr>
           )}
@@ -86,32 +94,13 @@ export default function TracesTable({
               onSelect={() => onSelect(trace)}
             />
           ))}
-          {traces.length > 0 && (
-            <tr>
-              {/* the footer collapes the rows print how much spans are shown if there is  next page  type load more if not show end result */}
-              <td colSpan={6}>
-                <div className="flex justify-between items-center p-3">
-                  <span className="text-vigil-muted text-[15px]">
-                    {`Showing ${traces.length} spans`}
-                  </span>
-                  {hasNextPage ? (
-                    <button
-                      type="button"
-                      onClick={onLoadMore}
-                      //disable button when its fetching spans
-                      disabled={isFetchingNextPage}
-                      className="text-[12px] md:text-[13px] cursor-pointer border border-vigil-border px-4 h-9 text-vigil-muted hover:border-vigil-text/60 hover:text-vigil-text/60 transition-[color,border-color] duration-200"
-                    >
-                      {isFetchingNextPage ? 'Loading…' : 'Load more'}
-                    </button>
-                  ) : (
-                    <span className="text-vigil-muted-extra text-[13px]">
-                      End of results
-                    </span>
-                  )}
-                </div>
-              </td>
-            </tr>
+          {!isLoading && !error && traces.length > 0 && (
+            <InfiniteScrollRow
+              colSpan={COLUMNS.length}
+              hasMore={hasNextPage}
+              loading={isFetchingNextPage}
+              onLoadMore={onLoadMore}
+            />
           )}
         </tbody>
       </table>

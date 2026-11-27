@@ -1,3 +1,4 @@
+import InfiniteScrollRow from '../shared/InfiniteScrollRow';
 import type { Metric } from '../../api/metricsApi';
 import MetricsRow from './MetricsRow';
 import { metricKey } from './metricData';
@@ -57,15 +58,22 @@ export default function MetricsTable({
             <tr>
               <td colSpan={4} className="py-6 text-center text-vigil-state-danger-text">
                 {error.message}
+                {hasNextPage && (
+                  <button type="button" onClick={onLoadMore} className="ml-3 underline">
+                    Retry
+                  </button>
+                )}
               </td>
             </tr>
           )}
           {/* if not loading and no errror and no metrics  */}
           {!isLoading && !error && metrics.length === 0 && (
             <tr>
-              <td colSpan={4} className="py-6 text-center text-vigil-muted">
-                No metrics match these filters. Try a wider period or clear the
-                service filter.
+              <td colSpan={4} className="py-15 text-center">
+                <h1 className="mb-1 text-[20px]">No metrics found</h1>
+                <p className="text-[14px] tracking-wider text-vigil-muted">
+                  Try a wider period or clear the service filter.
+                </p>
               </td>
             </tr>
           )}
@@ -83,32 +91,13 @@ export default function MetricsTable({
               />
             );
           })}
-          {metrics.length > 0 && (
-            <tr>
-              {/* the footer collapes the rows print how much points are shown if there is  next page  type load more if not show end result */}
-              <td colSpan={4}>
-                <div className="flex justify-between items-center p-3">
-                  <span className="text-vigil-muted text-[15px]">
-                    {`Showing ${metrics.length} points`}
-                  </span>
-                  {hasNextPage ? (
-                    <button
-                      type="button"
-                      onClick={onLoadMore}
-                      //disable button when its fetching points
-                      disabled={isFetchingNextPage}
-                      className="text-[12px] md:text-[13px] cursor-pointer border border-vigil-border px-4 h-9 text-vigil-muted hover:border-vigil-text/60 hover:text-vigil-text/60 transition-[color,border-color] duration-200"
-                    >
-                      {isFetchingNextPage ? 'Loading…' : 'Load more'}
-                    </button>
-                  ) : (
-                    <span className="text-vigil-muted-extra text-[13px]">
-                      End of results
-                    </span>
-                  )}
-                </div>
-              </td>
-            </tr>
+          {!isLoading && !error && metrics.length > 0 && (
+            <InfiniteScrollRow
+              colSpan={COLUMNS.length}
+              hasMore={hasNextPage}
+              loading={isFetchingNextPage}
+              onLoadMore={onLoadMore}
+            />
           )}
         </tbody>
       </table>
