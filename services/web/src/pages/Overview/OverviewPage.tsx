@@ -267,12 +267,26 @@ export default function OverviewPage() {
       await import('../../components/Overview/report/OverviewReport');
 
     await exportOverviewPdf({
-      period: timeWindow.label,
-      critical: rangeAlerts.filter((a) => a.severity === 'critical').length,
-      warning: rangeAlerts.filter((a) => a.severity === 'warning').length,
-      unacknowledged: rangeAlerts.filter((a) => a.status === 'sent').length,
-      healthy,
-      services: services.length,
+      window: timeWindow,
+      service,
+      alerts: service ? rangeAlerts.filter((a) => a.service === service) : rangeAlerts,
+      services: service ? services.filter((s) => s.name === service) : services,
+      spans: service ? spans.filter((s) => s.service === service) : spans,
+      chartStart,
+      chartData,
+      logs,
+      logFilter,
+      logSearch: query,
+      coverageNotes: [
+        alertsError ? 'Alert history could not be fully retrieved.' :
+          alertsLoading || alertsFetchingMore ? 'Alert history was still loading.' :
+          alertsHasMore ? 'Additional alert history was available beyond the loaded sample.' : '',
+        tracesQuery.error ? 'Trace data could not be fully retrieved.' :
+          tracesQuery.isLoading ? 'Trace data was still loading.' :
+          tracesQuery.hasNextPage ? 'Performance figures cover the latest loaded spans.' : '',
+        logsQuery.error ? 'Log data could not be fully retrieved.' :
+          logsQuery.isLoading ? 'Logs were still loading.' : '',
+      ].filter(Boolean),
     });
   };
 
