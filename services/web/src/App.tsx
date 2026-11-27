@@ -1,5 +1,7 @@
 import './index.css';
-import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { getTabTitle } from './components/Dashboard/Sidebar/dashboardNavigation';
+import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import LoginPage from './pages/Login/LoginPage';
 import SetupPage from './pages/Setup/SetupPage';
 import ProtectedRoute from './auth/ProtectedRoute';
@@ -28,6 +30,11 @@ import AddServicePage from './pages/Services/AddServicePage';
 import NotFoundPage from './pages/errors/NotFoundPage';
 
 function App() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    document.title = getTabTitle(pathname);
+  }, [pathname]);
+
   const [searchParams] = useSearchParams();
   const targetAlertId = searchParams.get('alert');
 

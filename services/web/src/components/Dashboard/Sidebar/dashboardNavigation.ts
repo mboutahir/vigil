@@ -9,6 +9,8 @@ import {
   faGear,
 } from '@fortawesome/free-solid-svg-icons';
 
+import { settingsNavigation } from '../../Settings/settingsNavigation';
+
 export const dashboardNavigation = [
   {
     title: 'monitor',
@@ -40,6 +42,23 @@ export const getPageTitle = (pathname: string) => {
     const link = section.links.find((link) => link.path === pathname);
     if (link) return link.label;
   }
-  if (pathname.startsWith('/settings/')) return 'settings';
+  if (settingsNavigation.some((link) => link.path === pathname)) return 'settings';
   return 'page not found';
 };
+
+const standaloneTitles: Record<string, string> = {
+  '/auth/login': 'Login',
+  '/auth/setup': 'Account Setup',
+  '/service-onboarding': 'Service Onboarding',
+  '/privacy': 'Privacy Policy',
+  '/terms': 'Terms of Service',
+};
+
+export function getTabTitle(pathname: string) {
+  const path = pathname.toLowerCase().replace(/\/+$/, '');
+  if (!path) return 'Vigil';
+
+  const settingsPage = settingsNavigation.find((link) => link.path === path);
+  const title = settingsPage?.label ?? standaloneTitles[path] ?? getPageTitle(path);
+  return title.replace(/\b[a-z]/g, (letter) => letter.toUpperCase()) + ' | Vigil';
+}
